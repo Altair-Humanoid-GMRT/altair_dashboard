@@ -7,11 +7,17 @@ import React, { useEffect, useState, useCallback } from "react";
 export default function Home() {
   const [parameters, setParameters] = useState({});
   const [editingParam, setEditingParam] = useState(null);
+  const [cmdParams, setCmdParams] = useState({
+    x: 0.0,
+    y: 0.0,
+    z: 0.3,
+  });
   const [newValue, setNewValue] = useState("");
+
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 5;
-  const RETRY_DELAY = 3000;
+  const RETRY_DELAY = 3500;
 
   // Create a ref to store the ROS instance
   const rosRef = React.useRef(null);
@@ -27,7 +33,7 @@ export default function Home() {
     }
 
     rosRef.current = new ROSLIB.Ros({
-      url: "ws://192.168.43.41:9090",
+      url: "ws://10.77.13.101:9090",
     });
 
     rosRef.current.on("connection", () => {
@@ -268,6 +274,62 @@ export default function Home() {
     }
   };
 
+  const handlePlayRobot = (x, y, z) => {
+    console.log(cmdParams);
+    const cmdVel = new ROSLIB.Topic({
+      ros: rosRef.current,
+      name: "/cmd_vel",
+      messageType: "geometry_msgs/Twist",
+    });
+
+    const twist = new ROSLIB.Message({
+      linear: {
+        x,
+        y,
+        z: 0.0,
+      },
+      angular: {
+        x: 0.0,
+        y: 0.0,
+        z,
+      },
+    });
+
+    cmdVel.publish(twist);
+  };
+
+  const handleStopRobot = (x, y, z) => {
+    const cmdVel = new ROSLIB.Topic({
+      ros: rosRef.current,
+      name: "/cmd_vel",
+      messageType: "geometry_msgs/Twist",
+    });
+
+    const twist = new ROSLIB.Message({
+      linear: {
+        x,
+        y,
+        z: 0.0,
+      },
+      angular: {
+        x: -1.0,
+        y: 0.0,
+        z,
+      },
+    });
+
+    cmdVel.publish(twist);
+  };
+
+  const handleCmdParamsSave = () => {
+    console.log(editingParam, newValue);
+    console.log(cmdParams[editingParam]);
+    setCmdParams[editingParam] = newValue;
+
+    setEditingParam(null);
+    setNewValue("");
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <div className="flex flex-col items-center gap-4">
@@ -284,6 +346,69 @@ export default function Home() {
           Status: {connectionStatus}
         </div>
       </div>
+
+      <table className="w-full max-w-4xl border-collapse border border-gray-300">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="p-2 border border-gray-300">Parameter Name</th>
+            <th className="p-2 border border-gray-300">Value</th>
+            <th className="p-2 border border-gray-300">Actions</th>
+            <th className="p-2 border border-gray-300">Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(cmdParams).map(([paramName, paramData]) => (
+            <tr key={paramName} className="hover:bg-gray-50">
+              <td className="p-2 border border-gray-300">{paramName}</td>
+              <td className="p-2 border border-gray-300">
+                {editingParam === paramName ? (
+                  <input
+                    type="text"
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    className="w-full p-1 border border-gray-300 rounded"
+                  />
+                ) : (
+                  paramData?.toString() || "undefined"
+                )}
+              </td>
+              <td className="p-2 border border-gray-300">
+                {editingParam === paramName ? (
+                  <button
+                    onClick={handleCmdParamsSave}
+                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    disabled={connectionStatus !== "connected"}
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleEdit(paramName, paramData)}
+                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    disabled={connectionStatus !== "connected"}
+                  >
+                    Edit
+                  </button>
+                )}
+              </td>
+              <td className="p-2 border border-gray-300">double</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button
+        onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
+        className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+      >
+        Play
+      </button>
+
+      <button
+        onClick={() => handleStopRobot(0.0, 0.0, 0.0)}
+        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        Stop
+      </button>
 
       <table className="w-full max-w-4xl border-collapse border border-gray-300">
         <thead>
