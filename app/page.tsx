@@ -1,6 +1,7 @@
 "use client";
 
 import ROSLIB from "roslib";
+// import * as ROS3D from "ros3d";
 import React, { useEffect, useState, useCallback } from "react";
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
 
   // Create a ref to store the ROS instance
   const rosRef = React.useRef(null);
+  const viewerRef = React.useRef(null);
 
   // Initialize ROS connection
   const initRosConnection = useCallback(() => {
@@ -25,7 +27,7 @@ export default function Home() {
     }
 
     rosRef.current = new ROSLIB.Ros({
-      url: "ws://localhost:9090",
+      url: "ws://192.168.43.41:9090",
     });
 
     rosRef.current.on("connection", () => {
@@ -33,6 +35,7 @@ export default function Home() {
       setConnectionStatus("connected");
       setRetryCount(0);
       fetchAllParameters();
+      fetchROSParameters();
     });
 
     rosRef.current.on("error", (error) => {
@@ -60,6 +63,31 @@ export default function Home() {
         }, RETRY_DELAY);
       }
     });
+
+    // viewerRef.current = new ROS3D.Viewer({
+    //   divID: "urdf",
+    //   width: 800,
+    //   height: 600,
+    //   antialias: true,
+    // });
+
+    // viewerRef.current.addObject(new ROS3D.Grid());
+    // // Setup a client to listen to TFs.
+    // const tfClient = new ROSLIB.TFClient({
+    //   ros: rosRef.current,
+    //   angularThres: 0.01,
+    //   transThres: 0.01,
+    //   rate: 10.0,
+    // });
+
+    // // Setup the URDF client.
+    // const urdfClient = new ROS3D.UrdfClient({
+    //   ros: rosRef.current,
+    //   tfClient: tfClient,
+    //   path: "http://resources.robotwebtools.org/",
+    //   rootObject: viewerRef.current.scene,
+    //   loader: ROS3D.COLLADA_LOADER_2,
+    // });
   }, [retryCount]);
 
   // Initialize connection on component mount
@@ -85,7 +113,7 @@ export default function Home() {
 
     const paramClient = new ROSLIB.Service({
       ros: rosRef.current,
-      name: "/param_manager/list_parameters",
+      name: "/quintic_walk/list_parameters",
       serviceType: "rcl_interfaces/srv/ListParameters",
     });
 
@@ -94,6 +122,21 @@ export default function Home() {
     paramClient.callService(request, (response) => {
       const paramNames = response.result.names;
       getParameterValues(paramNames);
+    });
+  }, [connectionStatus]);
+
+  const fetchROSParameters = useCallback(() => {
+    if (!rosRef.current || connectionStatus !== "connected") {
+      console.warn("Cannot fetch parameters: ROS connection not established");
+      return;
+    }
+
+    const paramClient = new ROSLIB.Param({
+      ros: rosRef.current,
+    });
+
+    paramClient.get(null, (params) => {
+      console.log(params);
     });
   }, [connectionStatus]);
 
@@ -106,7 +149,7 @@ export default function Home() {
 
       const paramClient = new ROSLIB.Service({
         ros: rosRef.current,
-        name: "/param_manager/get_parameters",
+        name: "/quintic_walk/get_parameters",
         serviceType: "rcl_interfaces/srv/GetParameters",
       });
 
@@ -151,7 +194,7 @@ export default function Home() {
   const updateParameter = (paramName, value) => {
     const paramClient = new ROSLIB.Service({
       ros: rosRef.current,
-      name: "/param_manager/set_parameters",
+      name: "/quintic_walk/set_parameters",
       serviceType: "rcl_interfaces/srv/SetParameters",
     });
 
@@ -228,7 +271,7 @@ export default function Home() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold">ROS 2 Parameter Dashboard</h1>
+        <h1 className="text-2xl font-bold">Altair Dashboard</h1>
         <div
           className={`text-sm ${
             connectionStatus === "connected"
