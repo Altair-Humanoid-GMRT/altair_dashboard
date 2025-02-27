@@ -10,7 +10,7 @@ export default function Home() {
   const [cmdParams, setCmdParams] = useState({
     x: 0.0,
     y: 0.0,
-    z: 0.3,
+    z: 0.0,
   });
   const [newValue, setNewValue] = useState("");
 
@@ -33,7 +33,7 @@ export default function Home() {
     }
 
     rosRef.current = new ROSLIB.Ros({
-      url: "ws://10.77.13.101:9090",
+      url: "ws://localhost:9090",
     });
 
     rosRef.current.on("connection", () => {
@@ -145,6 +145,12 @@ export default function Home() {
       console.log(params);
     });
   }, [connectionStatus]);
+
+  // Function to handle refresh (rerender)
+  const handleRefresh = () => {
+    fetchAllParameters();
+    fetchROSParameters();
+  };
 
   // Function to get values of specific parameters
   const getParameterValues = useCallback(
@@ -259,6 +265,24 @@ export default function Home() {
     });
   };
 
+  const saveParameters = () => {
+    const paramClient = new ROSLIB.Service({
+      ros: rosRef.current,
+      name: "/param_manager/save_parameters",
+      serviceType: "std_srvs/srv/Trigger",
+    });
+
+    const request = new ROSLIB.ServiceRequest({});
+    paramClient.callService(request, (response) => {
+      if (response.success) {
+        alert("Parameters saved successfully.");
+        console.log("Parameters saved successfully.");
+      } else {
+        console.error("Failed to save parameters.");
+      }
+    });
+  };
+
   // Function to handle editing a parameter
   const handleEdit = (paramName, currentValue) => {
     setEditingParam(paramName);
@@ -322,16 +346,19 @@ export default function Home() {
   };
 
   const handleCmdParamsSave = () => {
-    console.log(editingParam, newValue);
-    console.log(cmdParams[editingParam]);
-    setCmdParams[editingParam] = newValue;
+    if (editingParam !== null) {
+      setCmdParams((prevCmdParams) => ({
+        ...prevCmdParams,
+        [editingParam]: parseFloat(newValue),
+      }));
 
-    setEditingParam(null);
-    setNewValue("");
+      setEditingParam(null);
+      setNewValue("");
+    }
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-10 gap-16 sm:p-20">
       <div className="flex flex-col items-center gap-4">
         <h1 className="text-2xl font-bold">Altair Dashboard</h1>
         <div
@@ -345,6 +372,13 @@ export default function Home() {
         >
           Status: {connectionStatus}
         </div>
+        <button
+          onClick={handleRefresh}
+          className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          disabled={connectionStatus !== "connected"}
+        >
+          Refresh
+        </button>
       </div>
 
       <table className="w-full max-w-4xl border-collapse border border-gray-300">
@@ -396,19 +430,22 @@ export default function Home() {
           ))}
         </tbody>
       </table>
-      <button
-        onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
-        className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-      >
-        Play
-      </button>
 
-      <button
-        onClick={() => handleStopRobot(0.0, 0.0, 0.0)}
-        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Stop
-      </button>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
+          className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Play
+        </button>
+
+        <button
+          onClick={() => handleStopRobot(0.0, 0.0, 0.0)}
+          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+        >
+          Stop
+        </button>
+      </div>
 
       <table className="w-full max-w-4xl border-collapse border border-gray-300">
         <thead>
@@ -471,6 +508,13 @@ export default function Home() {
           ))}
         </tbody>
       </table>
+      <button
+        onClick={saveParameters}
+        className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+        disabled={connectionStatus !== "connected"}
+      >
+        Save Parameters to File
+      </button>
     </div>
   );
 }
