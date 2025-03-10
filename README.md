@@ -40,7 +40,7 @@ ros2 launch altair_moveit_config move_group.launch.py
 3. Start the development server
 
   ```bash
-  npm start
+  npm run dev
   ```
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
