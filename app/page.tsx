@@ -358,163 +358,275 @@ export default function Home() {
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-10 gap-16 sm:p-20">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold">Altair Dashboard</h1>
-        <div
-          className={`text-sm ${
-            connectionStatus === "connected"
-              ? "text-green-600"
-              : connectionStatus === "error"
-              ? "text-red-600"
-              : "text-yellow-600"
-          }`}
-        >
-          Status: {connectionStatus}
+    <div className="flex flex-col min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <header className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-gray-800">Altair Dashboard</h1>
+          <div
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              connectionStatus === "connected"
+                ? "bg-green-100 text-green-800"
+                : connectionStatus === "error"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {connectionStatus}
+          </div>
         </div>
         <button
           onClick={handleRefresh}
-          className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={connectionStatus !== "connected"}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+              clipRule="evenodd"
+            />
+          </svg>
           Refresh
         </button>
+      </header>
+
+      {/* Command Parameters */}
+      <div className="mb-8 bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-700">
+          Command Parameters
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Parameter Name
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Value
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Actions
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Type
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(cmdParams).map(
+                ([paramName, paramData], index) => (
+                  <tr
+                    key={paramName}
+                    className={`${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                  >
+                    <td className="p-3 border-t border-gray-200">
+                      {paramName}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      {editingParam === paramName ? (
+                        <input
+                          type="text"
+                          value={newValue}
+                          onChange={(e) => setNewValue(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <span className="font-mono">
+                          {paramData?.toString() || "undefined"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      {editingParam === paramName ? (
+                        <button
+                          onClick={handleCmdParamsSave}
+                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                          disabled={connectionStatus !== "connected"}
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit(paramName, paramData)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          disabled={connectionStatus !== "connected"}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                        double
+                      </span>
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <table className="w-full max-w-4xl border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 border border-gray-300">Parameter Name</th>
-            <th className="p-2 border border-gray-300">Value</th>
-            <th className="p-2 border border-gray-300">Actions</th>
-            <th className="p-2 border border-gray-300">Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(cmdParams).map(([paramName, paramData]) => (
-            <tr key={paramName} className="hover:bg-gray-50">
-              <td className="p-2 border border-gray-300">{paramName}</td>
-              <td className="p-2 border border-gray-300">
-                {editingParam === paramName ? (
-                  <input
-                    type="text"
-                    value={newValue}
-                    onChange={(e) => setNewValue(e.target.value)}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  />
-                ) : (
-                  paramData?.toString() || "undefined"
-                )}
-              </td>
-              <td className="p-2 border border-gray-300">
-                {editingParam === paramName ? (
-                  <button
-                    onClick={handleCmdParamsSave}
-                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                    disabled={connectionStatus !== "connected"}
-                  >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleEdit(paramName, paramData)}
-                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    disabled={connectionStatus !== "connected"}
-                  >
-                    Edit
-                  </button>
-                )}
-              </td>
-              <td className="p-2 border border-gray-300">double</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="flex items-center gap-4">
+      {/* Robot Controls */}
+      <div className="flex justify-center space-x-4 mb-8">
         <button
           onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
-          className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+              clipRule="evenodd"
+            />
+          </svg>
           Play
         </button>
 
         <button
           onClick={() => handleStopRobot(0.0, 0.0, 0.0)}
-          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+          className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+              clipRule="evenodd"
+            />
+          </svg>
           Stop
         </button>
       </div>
 
-      <table className="w-full max-w-4xl border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 border border-gray-300">Parameter Name</th>
-            <th className="p-2 border border-gray-300">Value</th>
-            <th className="p-2 border border-gray-300">Actions</th>
-            <th className="p-2 border border-gray-300">Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(parameters).map(([paramName, paramData]) => (
-            <tr key={paramName} className="hover:bg-gray-50">
-              <td className="p-2 border border-gray-300">{paramName}</td>
-              <td className="p-2 border border-gray-300">
-                {editingParam === paramName ? (
-                  <input
-                    type="text"
-                    value={newValue}
-                    onChange={(e) => setNewValue(e.target.value)}
-                    className="w-full p-1 border border-gray-300 rounded"
-                  />
-                ) : (
-                  paramData.value?.toString() || "undefined"
-                )}
-              </td>
-              <td className="p-2 border border-gray-300">
-                {editingParam === paramName ? (
-                  <button
-                    onClick={handleSave}
-                    className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                    disabled={connectionStatus !== "connected"}
+      {/* Parameters */}
+      <div className="mb-8 bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4 text-gray-700">Parameters</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Parameter Name
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Value
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Actions
+                </th>
+                <th className="text-left p-3 text-gray-600 font-semibold">
+                  Type
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(parameters).map(
+                ([paramName, paramData], index) => (
+                  <tr
+                    key={paramName}
+                    className={`${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
                   >
-                    Save
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleEdit(paramName, paramData.value)}
-                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    disabled={connectionStatus !== "connected"}
-                  >
-                    Edit
-                  </button>
-                )}
-              </td>
-              <td className="p-2 border border-gray-300">
-                {paramData.type === 1
-                  ? "bool"
-                  : paramData.type === 2
-                  ? "int"
-                  : paramData.type === 3
-                  ? "double"
-                  : paramData.type === 4
-                  ? "string"
-                  : paramData.type === 9
-                  ? "string[]"
-                  : "unknown"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button
-        onClick={saveParameters}
-        className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-        disabled={connectionStatus !== "connected"}
-      >
-        Save Parameters to File
-      </button>
+                    <td className="p-3 border-t border-gray-200">
+                      {paramName}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      {editingParam === paramName ? (
+                        <input
+                          type="text"
+                          value={newValue}
+                          onChange={(e) => setNewValue(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <span className="font-mono">
+                          {paramData.value?.toString() || "undefined"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      {editingParam === paramName ? (
+                        <button
+                          onClick={handleSave}
+                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                          disabled={connectionStatus !== "connected"}
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit(paramName, paramData.value)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          disabled={connectionStatus !== "connected"}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </td>
+                    <td className="p-3 border-t border-gray-200">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                        {paramData.type === 1
+                          ? "bool"
+                          : paramData.type === 2
+                          ? "int"
+                          : paramData.type === 3
+                          ? "double"
+                          : paramData.type === 4
+                          ? "string"
+                          : paramData.type === 9
+                          ? "string[]"
+                          : "unknown"}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={saveParameters}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+          </svg>
+          Save Parameters to File
+        </button>
+      </div>
     </div>
   );
 }
