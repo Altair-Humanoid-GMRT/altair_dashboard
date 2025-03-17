@@ -3,6 +3,7 @@
 import ROSLIB from "roslib";
 // import * as ROS3D from "ros3d";
 import React, { useEffect, useState, useCallback } from "react";
+import HierarchicalParameters from "@/components/HierarchicalParameters";
 
 export default function Home() {
   const [parameters, setParameters] = useState({});
@@ -521,7 +522,16 @@ export default function Home() {
       </div>
 
       {/* Parameters */}
-      <div className="mb-8 bg-white rounded-lg shadow p-6">
+      <HierarchicalParameters
+        parameters={parameters}
+        connectionStatus={connectionStatus}
+        handleEdit={handleEdit}
+        handleSave={handleSave}
+        setNewValue={setNewValue}
+        newValue={newValue}
+        editingParam={editingParam}
+      />
+      {/* <div className="mb-8 bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-700">Parameters</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -607,7 +617,7 @@ export default function Home() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
 
       {/* Save Button */}
       <div className="flex justify-center mb-6">
