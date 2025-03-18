@@ -18,6 +18,12 @@ ros2 launch quintic_walk controller.launch.py
 ros2 launch altair_moveit_config move_group.launch.py
 ```
 
+4. Launch the param-manager service:
+
+```bash
+ros2 launch param_manager param_manager.launch.py
+```
+
 ## Client-Side Setup
 
 ### Prerequisites

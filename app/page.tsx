@@ -16,13 +16,18 @@ export default function Home() {
   const [newValue, setNewValue] = useState("");
 
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [connectionUri, setConnectionUri] = useState("ws://localhost:9090");
   const [retryCount, setRetryCount] = useState(0);
+
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+
   const MAX_RETRIES = 5;
   const RETRY_DELAY = 3500;
 
   // Create a ref to store the ROS instance
   const rosRef = React.useRef(null);
-  const viewerRef = React.useRef(null);
 
   // Initialize ROS connection
   const initRosConnection = useCallback(() => {
@@ -34,8 +39,9 @@ export default function Home() {
     }
 
     rosRef.current = new ROSLIB.Ros({
-      url: "ws://localhost:9090",
+      url: connectionUri,
     });
+    console.log(connectionUri);
 
     rosRef.current.on("connection", () => {
       console.log("Connected to websocket server.");
@@ -70,31 +76,6 @@ export default function Home() {
         }, RETRY_DELAY);
       }
     });
-
-    // viewerRef.current = new ROS3D.Viewer({
-    //   divID: "urdf",
-    //   width: 800,
-    //   height: 600,
-    //   antialias: true,
-    // });
-
-    // viewerRef.current.addObject(new ROS3D.Grid());
-    // // Setup a client to listen to TFs.
-    // const tfClient = new ROSLIB.TFClient({
-    //   ros: rosRef.current,
-    //   angularThres: 0.01,
-    //   transThres: 0.01,
-    //   rate: 10.0,
-    // });
-
-    // // Setup the URDF client.
-    // const urdfClient = new ROS3D.UrdfClient({
-    //   ros: rosRef.current,
-    //   tfClient: tfClient,
-    //   path: "http://resources.robotwebtools.org/",
-    //   rootObject: viewerRef.current.scene,
-    //   loader: ROS3D.COLLADA_LOADER_2,
-    // });
   }, [retryCount]);
 
   // Initialize connection on component mount
@@ -276,11 +257,18 @@ export default function Home() {
     const request = new ROSLIB.ServiceRequest({});
     paramClient.callService(request, (response) => {
       if (response.success) {
-        alert("Parameters saved successfully.");
         console.log("Parameters saved successfully.");
+        setModalType("success");
+        setModalMessage("Parameters saved successfully.");
+        setShowModal(true);
       } else {
         console.error("Failed to save parameters.");
+        setModalType("error");
+        setModalMessage("Failed to save parameters: " + response.message);
+        setShowModal(true);
       }
+
+      // Modal UI will be rendered in the JSX
     });
   };
 
@@ -375,6 +363,30 @@ export default function Home() {
           >
             {connectionStatus}
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={connectionUri}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setConnectionUri(e.target.value)
+            }
+            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="ws://localhost:9090"
+          />
+          <button
+            onClick={() => {
+              if (rosRef.current) {
+                rosRef.current.removeAllListeners();
+                rosRef.current.close();
+                rosRef.current = null;
+              }
+              initRosConnection();
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Apply
+          </button>
         </div>
         <button
           onClick={handleRefresh}
@@ -531,93 +543,6 @@ export default function Home() {
         newValue={newValue}
         editingParam={editingParam}
       />
-      {/* <div className="mb-8 bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">Parameters</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Parameter Name
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Value
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Actions
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Type
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(parameters).map(
-                ([paramName, paramData], index) => (
-                  <tr
-                    key={paramName}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
-                  >
-                    <td className="p-3 border-t border-gray-200">
-                      {paramName}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      {editingParam === paramName ? (
-                        <input
-                          type="text"
-                          value={newValue}
-                          onChange={(e) => setNewValue(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <span className="font-mono">
-                          {paramData.value?.toString() || "undefined"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      {editingParam === paramName ? (
-                        <button
-                          onClick={handleSave}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit(paramName, paramData.value)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                        {paramData.type === 1
-                          ? "bool"
-                          : paramData.type === 2
-                          ? "int"
-                          : paramData.type === 3
-                          ? "double"
-                          : paramData.type === 4
-                          ? "string"
-                          : paramData.type === 9
-                          ? "string[]"
-                          : "unknown"}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
 
       {/* Save Button */}
       <div className="flex justify-center mb-6">
@@ -637,6 +562,57 @@ export default function Home() {
           Save Parameters to File
         </button>
       </div>
+
+      {/* Modal for saving parameters status */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3
+                className={`text-lg font-medium ${
+                  modalType === "success" ? "text-green-700" : "text-red-700"
+                }`}
+              >
+                {modalType === "success" ? "Success" : "Error"}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-6">
+              <p className="text-gray-700">{modalMessage}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowModal(false)}
+                className={`px-4 py-2 rounded-md text-white ${
+                  modalType === "success"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
