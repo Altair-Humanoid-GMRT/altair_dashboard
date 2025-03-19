@@ -4,6 +4,7 @@ import ROSLIB from "roslib";
 // import * as ROS3D from "ros3d";
 import React, { useEffect, useState, useCallback } from "react";
 import HierarchicalParameters from "@/components/HierarchicalParameters";
+import History from "@/components/History";
 
 export default function Home() {
   const [parameters, setParameters] = useState({});
@@ -18,6 +19,8 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [connectionUri, setConnectionUri] = useState("ws://localhost:9090");
   const [retryCount, setRetryCount] = useState(0);
+
+  const [isLoadingSave, setIsLoadingSave] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("");
@@ -248,6 +251,17 @@ export default function Home() {
   };
 
   const saveParameters = () => {
+    if (!rosRef.current || connectionStatus !== "connected") {
+      console.warn("Cannot save parameters: ROS connection not established");
+
+      setModalType("error");
+      setModalMessage("Cannot save parameters: ROS connection not established");
+      setShowModal(true);
+      return;
+    }
+
+    setIsLoadingSave(true);
+
     const paramClient = new ROSLIB.Service({
       ros: rosRef.current,
       name: "/param_manager/save_parameters",
@@ -257,11 +271,14 @@ export default function Home() {
     const request = new ROSLIB.ServiceRequest({});
     paramClient.callService(request, (response) => {
       if (response.success) {
+        setIsLoadingSave(false);
         console.log("Parameters saved successfully.");
         setModalType("success");
         setModalMessage("Parameters saved successfully.");
         setShowModal(true);
+        handleRefresh();
       } else {
+        setIsLoadingSave(false);
         console.error("Failed to save parameters.");
         setModalType("error");
         setModalMessage("Failed to save parameters: " + response.message);
@@ -364,7 +381,7 @@ export default function Home() {
             {connectionStatus}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <input
             type="text"
             value={connectionUri}
@@ -387,7 +404,7 @@ export default function Home() {
           >
             Apply
           </button>
-        </div>
+        </div> */}
         <button
           onClick={handleRefresh}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -533,6 +550,19 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Add the History Section */}
+      <History
+        rosRef={rosRef}
+        connectionStatus={connectionStatus}
+        onRestore={() => {
+          // Function to call after a parameter file is restored
+          setModalType("success");
+          setModalMessage("Parameters restored successfully");
+          setShowModal(true);
+        }}
+        onRefresh={handleRefresh}
+      />
+
       {/* Parameters */}
       <HierarchicalParameters
         parameters={parameters}
@@ -549,17 +579,45 @@ export default function Home() {
         <button
           onClick={saveParameters}
           className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
-          disabled={connectionStatus !== "connected"}
+          disabled={connectionStatus !== "connected" || isLoadingSave}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-          </svg>
-          Save Parameters to File
+          {isLoadingSave ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Saving...
+            </>
+          ) : (
+            <>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+              </svg>
+              Save Parameters to File
+            </>
+          )}
         </button>
       </div>
 

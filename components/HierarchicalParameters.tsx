@@ -10,6 +10,7 @@ const HierarchicalParameters = ({
   connectionStatus,
 }) => {
   const [expandedSections, setExpandedSections] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Group parameters by their hierarchy
   const groupedParameters = useMemo(() => {
@@ -254,13 +255,14 @@ const HierarchicalParameters = ({
       </div>
 
       <div className="border-b border-gray-200 mb-4"></div>
-
       {/* Search input */}
       <div className="mb-4">
         <div className="relative">
           <input
             type="text"
             placeholder="Search parameters..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full p-2 pl-8 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="absolute left-2 top-2 text-gray-400">
@@ -282,6 +284,83 @@ const HierarchicalParameters = ({
         </div>
       </div>
 
+      <div className="overflow-x-auto">
+        {searchTerm ? (
+          <div>
+            {Object.entries(parameters)
+              .filter(([paramName]) =>
+                paramName.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map(([paramName, paramData]) => (
+                <div
+                  key={paramName}
+                  className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded"
+                >
+                  <div className="flex flex-col">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="font-medium text-gray-700">
+                          {paramName}
+                        </span>
+                        <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                          {paramData.type === 1
+                            ? "bool"
+                            : paramData.type === 2
+                            ? "int"
+                            : paramData.type === 3
+                            ? "double"
+                            : paramData.type === 4
+                            ? "string"
+                            : paramData.type === 9
+                            ? "string[]"
+                            : "unknown"}
+                        </span>
+                      </div>
+                      <div>
+                        {editingParam === paramName ? (
+                          <button
+                            onClick={() => handleSave()}
+                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
+                            disabled={connectionStatus !== "connected"}
+                          >
+                            Save
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleEdit(paramName, paramData.value)
+                            }
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
+                            disabled={connectionStatus !== "connected"}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      {editingParam === paramName ? (
+                        <input
+                          type="text"
+                          value={newValue}
+                          onChange={(e) => setNewValue(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <div className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700">
+                          {paramData.value?.toString() || "undefined"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          renderGroup(groupedParameters)
+        )}
+      </div>
       <div className="overflow-x-auto">{renderGroup(groupedParameters)}</div>
     </div>
   );
