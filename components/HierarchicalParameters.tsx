@@ -361,7 +361,7 @@ const HierarchicalParameters = ({
           renderGroup(groupedParameters)
         )}
       </div>
-      <div className="overflow-x-auto">{renderGroup(groupedParameters)}</div>
+      {/* <div className="overflow-x-auto">{renderGroup(groupedParameters)}</div> */}
     </div>
   );
 };
