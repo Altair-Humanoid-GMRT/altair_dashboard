@@ -1,90 +1,132 @@
-'use client';
-import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+'use client'
+import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
+import ROSLIB from 'roslib'
 
-export default function MonitoredMarkerMap() {
-  const mapRef = useRef(null);
-  const [markers, setMarkers] = useState([]);
-  const [isReady, setIsReady] = useState(false);
+export default function RobotMapWithMonitoring() {
+  const mapRef = useRef(null)
+  const [robotPos, setRobotPos] = useState(null)
+  const [ros, setRos] = useState(null)
+  const [markers, setMarkers] = useState([])
+  const [isConnected, setIsConnected] = useState(false)
 
-  // Add new marker
-  const addMarker = (x, y) => {
-    if (!mapRef.current || !isReady) return;
+  // Initialize ROS connection
+  useEffect(() => {
+    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' })
     
-    const rect = mapRef.current.getBoundingClientRect();
-    const img = mapRef.current.querySelector('img');
-    const imgWidth = img.clientWidth;
-    const imgHeight = img.clientHeight;
+    ros.on('connection', () => {
+      console.log('ROS Connected')
+      setIsConnected(true)
+    })
     
-    // Boundary checks
-    const maxX = imgWidth / 2 - 10;
-    const maxY = imgHeight / 2 - 10;
+    ros.on('error', (err) => {
+      console.error('ROS Error:', err)
+      setIsConnected(false)
+    })
     
-    const newMarker = {
+    ros.on('close', () => {
+      console.log('ROS Disconnected')
+      setIsConnected(false)
+    })
+    
+    setRos(ros)
+    return () => ros.close()
+  }, [])
+
+  // Subscribe to odometry
+  useEffect(() => {
+    if (!ros || !isConnected) return
+
+    const odom = new ROSLIB.Topic({
+      ros: ros,
+      name: '/walk_engine_odometry',
+      messageType: 'nav_msgs/Odometry'
+    })
+
+    const callback = (msg) => {
+      const { position, orientation } = msg.pose.pose
+      setRobotPos({
+        x: position.x,
+        y: position.y,
+        theta: Math.atan2(
+          2 * (orientation.w * orientation.z + orientation.x * orientation.y),
+          1 - 2 * (orientation.y * orientation.y + orientation.z * orientation.z)
+        ),
+        timestamp: new Date().toLocaleTimeString()
+      })
+    }
+
+    odom.subscribe(callback)
+    return () => odom.unsubscribe()
+  }, [ros, isConnected])
+
+  // Add new marker at current robot position
+  const addMarker = () => {
+    if (!robotPos) return
+    
+    setMarkers(prev => [...prev, {
       id: Date.now(),
-      x: Math.max(-maxX, Math.min(x, maxX)),
-      y: Math.max(-maxY, Math.min(y, maxY)),
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      timestamp: new Date().toLocaleTimeString(),
-      status: 'Active'
-    };
-    
-    setMarkers(prev => [...prev, newMarker]);
-  };
+      x: robotPos.x,
+      y: robotPos.y,
+      timestamp: robotPos.timestamp,
+      status: 'active'
+    }])
+  }
 
-  // Remove marker
+  // Remove marker by ID
   const removeMarker = (id) => {
-    setMarkers(prev => prev.map(m => 
-      m.id === id ? { ...m, status: 'Removed' } : m
-    ));
-    
-    setTimeout(() => {
-      setMarkers(prev => prev.filter(m => m.id !== id));
-    }, 500);
-  };
+    setMarkers(prev => prev.filter(m => m.id !== id))
+  }
 
   // Toggle marker status
   const toggleMarker = (id) => {
-    setMarkers(prev => prev.map(marker =>
-      marker.id === id
-        ? { 
-            ...marker, 
-            status: marker.status === 'Active' ? 'Inactive' : 'Active',
-            color: marker.status === 'Active' 
-              ? `hsl(0, 70%, 50%)` 
-              : `hsl(${Math.random() * 360}, 70%, 50%)`
-          }
-        : marker
-    ));
-  };
+    setMarkers(prev => prev.map(m => 
+      m.id === id 
+        ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' } 
+        : m
+    ))
+  }
 
   return (
     <div style={styles.container}>
-      {/* Map Container */}
-      <div ref={mapRef} style={styles.mapWrapper}>
+      {/* Map Display */}
+      <div ref={mapRef} style={styles.mapContainer}>
         <Image
           src="/map.png"
           alt="Map"
           fill
           style={styles.mapImage}
           priority
-          onLoadingComplete={() => setIsReady(true)}
         />
 
-        {isReady && markers.map(marker => (
+        {/* Robot Marker */}
+        {robotPos && (
+          <div style={{
+            ...styles.robotMarker,
+            transform: `
+              translate(
+                calc(-50% + ${robotPos.x * 100}px),
+                calc(-50% - ${robotPos.y * 100}px)
+              )
+              rotate(${robotPos.theta}rad)
+            `
+          }} />
+        )}
+
+        {/* Static Markers */}
+        {markers.map(marker => (
           <div
             key={marker.id}
             style={{
-              ...styles.marker,
-              transform: `translate(
-                calc(-50% + ${marker.x}px),
-                calc(-50% - ${marker.y}px)
-              )`,
-              backgroundColor: marker.color,
-              opacity: marker.status === 'Removed' ? 0 : 1,
-              transition: 'all 0.3s ease'
+              ...styles.staticMarker,
+              backgroundColor: marker.status === 'active' ? '#4CAF50' : '#f44336',
+              transform: `
+                translate(
+                  calc(-50% + ${marker.x * 100}px),
+                  calc(-50% - ${marker.y * 100}px)
+                )
+              `
             }}
-            onClick={() => toggleMarker(marker.id)}
           />
         ))}
       </div>
@@ -92,76 +134,70 @@ export default function MonitoredMarkerMap() {
       {/* Control Panel */}
       <div style={styles.controlPanel}>
         <button 
-          onClick={() => addMarker(0, 0)}
+          onClick={addMarker}
           style={styles.button}
+          disabled={!robotPos}
         >
-          Add Center Marker
+          Add Marker at Current Position
         </button>
-        <button
-          onClick={() => addMarker(
-            Math.floor(Math.random() * 300 - 150),
-            Math.floor(Math.random() * 200 - 100)
-          )}
-          style={styles.button}
-        >
-          Add Random Marker
-        </button>
-      </div>
-
-      {/* Marker Monitoring Panel */}
-      <div style={styles.monitoringPanel}>
-        <h3 style={styles.panelTitle}>Marker Monitoring</h3>
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Position (X,Y)</th>
-                <th>Status</th>
-                <th>Timestamp</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {markers.map(marker => (
-                <tr key={marker.id} style={{
-                  ...styles.tableRow,
-                  background: marker.status === 'Inactive' ? '#f5f5f5' : 'white',
-                  color: marker.status === 'Inactive' ? '#999' : 'inherit'
-                }}>
-                  <td>{marker.id.toString().slice(-4)}</td>
-                  <td>({marker.x.toFixed(0)}, {marker.y.toFixed(0)})</td>
-                  <td>
-                    <span style={{
-                      color: marker.status === 'Active' ? 'green' : 'red',
-                      fontWeight: 'bold'
-                    }}>
-                      {marker.status}
-                    </span>
-                  </td>
-                  <td>{marker.timestamp}</td>
-                  <td>
-                    <button 
-                      onClick={() => toggleMarker(marker.id)}
-                      style={styles.smallButton}
-                    >
-                      Toggle
-                    </button>
-                    <button 
-                      onClick={() => removeMarker(marker.id)}
-                      style={{ ...styles.smallButton, marginLeft: '5px' }}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        
+        <div style={styles.status}>
+          ROS: <span style={{ color: isConnected ? 'green' : 'red' }}>
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </span>
+          {robotPos && ` | Robot: (${robotPos.x.toFixed(2)}, ${robotPos.y.toFixed(2)})`}
         </div>
       </div>
+
+      {/* Marker Monitoring Table */}
+      <div style={styles.monitoringPanel}>
+        <h3 style={styles.panelTitle}>Marker Monitoring</h3>
+        
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Position (X,Y)</th>
+              <th>Status</th>
+              <th>Timestamp</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {markers.map(marker => (
+              <tr key={marker.id}>
+                <td>{marker.id.toString().slice(-4)}</td>
+                <td>({marker.x.toFixed(2)}, {marker.y.toFixed(2)})</td>
+                <td>
+                  <span style={{ 
+                    color: marker.status === 'active' ? 'green' : 'red',
+                    fontWeight: 'bold'
+                  }}>
+                    {marker.status.toUpperCase()}
+                  </span>
+                </td>
+                <td>{marker.timestamp}</td>
+                <td>
+                  <button 
+                    onClick={() => toggleMarker(marker.id)}
+                    style={styles.smallButton}
+                  >
+                    Toggle
+                  </button>
+                  <button 
+                    onClick={() => removeMarker(marker.id)}
+                    style={{ ...styles.smallButton, ...styles.dangerButton }}
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  )
 }
 
 // Styles
@@ -170,60 +206,83 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    minHeight: '100vh',
     padding: '20px',
     fontFamily: 'Arial, sans-serif'
   },
-  mapWrapper: {
+  mapContainer: {
     position: 'relative',
     width: '800px',
     height: '600px',
-    border: '8px solid #333',
-    overflow: 'hidden',
+    border: '2px solid #333',
     marginBottom: '20px'
   },
   mapImage: {
     objectFit: 'contain',
     pointerEvents: 'none'
   },
-  marker: {
+  robotMarker: {
     position: 'absolute',
     left: '50%',
     top: '50%',
-    width: '20px',
-    height: '20px',
+    width: '24px',
+    height: '24px',
+    backgroundColor: 'blue',
     borderRadius: '50%',
     border: '2px solid white',
-    boxShadow: '0 0 5px rgba(0,0,0,0.5)',
-    zIndex: 10,
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease'
+    zIndex: 20,
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      top: '4px',
+      left: '50%',
+      width: '0',
+      height: '0',
+      borderLeft: '6px solid transparent',
+      borderRight: '6px solid transparent',
+      borderBottom: '12px solid white',
+      transform: 'translateX(-50%)'
+    }
+  },
+  staticMarker: {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    border: '2px solid white',
+    zIndex: 15,
+    transition: 'all 0.3s ease'
   },
   controlPanel: {
+    width: '800px',
     display: 'flex',
-    gap: '10px',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: '20px'
   },
   button: {
-    padding: '8px 16px',
-    backgroundColor: '#4CAF50',
+    padding: '10px 15px',
+    backgroundColor: '#2196F3',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s',
-    ':hover': {
-      backgroundColor: '#45a049'
+    ':disabled': {
+      backgroundColor: '#cccccc',
+      cursor: 'not-allowed'
     }
+  },
+  status: {
+    fontSize: '14px',
+    color: '#333'
   },
   monitoringPanel: {
     width: '800px',
     border: '1px solid #ddd',
     borderRadius: '8px',
     padding: '20px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   panelTitle: {
     marginTop: '0',
@@ -231,29 +290,21 @@ const styles = {
     borderBottom: '1px solid #eee',
     paddingBottom: '10px'
   },
-  tableContainer: {
-    overflowX: 'auto'
-  },
   table: {
     width: '100%',
-    borderCollapse: 'collapse'
-  },
-  tableRow: {
-    borderBottom: '1px solid #eee',
-    ':hover': {
-      backgroundColor: '#f9f9f9'
-    }
+    borderCollapse: 'collapse',
+    marginTop: '10px'
   },
   smallButton: {
-    padding: '4px 8px',
+    padding: '5px 10px',
     fontSize: '12px',
     backgroundColor: '#f0f0f0',
     border: '1px solid #ddd',
     borderRadius: '3px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    ':hover': {
-      backgroundColor: '#e0e0e0'
-    }
+    cursor: 'pointer'
+  },
+  dangerButton: {
+    backgroundColor: '#ffebee',
+    borderColor: '#ef9a9a'
   }
-};
+}
