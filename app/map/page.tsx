@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import ROSLIB from 'roslib'
 
-export default function RobotMapWithMonitoring() {
+export default function RobotMapWithHeading() {
   const mapRef = useRef(null)
   const [robotPos, setRobotPos] = useState(null)
   const [ros, setRos] = useState(null)
@@ -45,13 +45,16 @@ export default function RobotMapWithMonitoring() {
 
     const callback = (msg) => {
       const { position, orientation } = msg.pose.pose
+      const theta = Math.atan2(
+        2 * (orientation.w * orientation.z + orientation.x * orientation.y),
+        1 - 2 * (orientation.y * orientation.y + orientation.z * orientation.z)
+      )
+      
       setRobotPos({
         x: position.x,
         y: position.y,
-        theta: Math.atan2(
-          2 * (orientation.w * orientation.z + orientation.x * orientation.y),
-          1 - 2 * (orientation.y * orientation.y + orientation.z * orientation.z)
-        ),
+        theta,
+        heading: getCardinalDirection(theta),
         timestamp: new Date().toLocaleTimeString()
       })
     }
@@ -60,7 +63,15 @@ export default function RobotMapWithMonitoring() {
     return () => odom.unsubscribe()
   }, [ros, isConnected])
 
-  // Add new marker at current robot position
+  // Convert radians to cardinal direction
+  const getCardinalDirection = (theta) => {
+    const degrees = theta * (180/Math.PI)
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    const index = Math.round(((degrees % 360) + 360) % 360 / 45) % 8
+    return directions[index]
+  }
+
+  // Add new marker
   const addMarker = () => {
     if (!robotPos) return
     
@@ -68,23 +79,15 @@ export default function RobotMapWithMonitoring() {
       id: Date.now(),
       x: robotPos.x,
       y: robotPos.y,
+      heading: robotPos.heading,
       timestamp: robotPos.timestamp,
       status: 'active'
     }])
   }
 
-  // Remove marker by ID
+  // Remove marker
   const removeMarker = (id) => {
     setMarkers(prev => prev.filter(m => m.id !== id))
-  }
-
-  // Toggle marker status
-  const toggleMarker = (id) => {
-    setMarkers(prev => prev.map(m => 
-      m.id === id 
-        ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' } 
-        : m
-    ))
   }
 
   return (
@@ -99,18 +102,25 @@ export default function RobotMapWithMonitoring() {
           priority
         />
 
-        {/* Robot Marker */}
+        {/* Robot with Heading Direction */}
         {robotPos && (
           <div style={{
-            ...styles.robotMarker,
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
             transform: `
               translate(
                 calc(-50% + ${robotPos.x * 100}px),
                 calc(-50% - ${robotPos.y * 100}px)
               )
               rotate(${robotPos.theta}rad)
-            `
-          }} />
+            `,
+            zIndex: 20
+          }}>
+            <div style={styles.robotBase}></div>
+            <div style={styles.robotHeading}></div>
+            <div style={styles.headingLabel}>{robotPos.heading}</div>
+          </div>
         )}
 
         {/* Static Markers */}
@@ -119,7 +129,6 @@ export default function RobotMapWithMonitoring() {
             key={marker.id}
             style={{
               ...styles.staticMarker,
-              backgroundColor: marker.status === 'active' ? '#4CAF50' : '#f44336',
               transform: `
                 translate(
                   calc(-50% + ${marker.x * 100}px),
@@ -127,7 +136,9 @@ export default function RobotMapWithMonitoring() {
                 )
               `
             }}
-          />
+          >
+            <div style={styles.markerHeading}>{marker.heading}</div>
+          </div>
         ))}
       </div>
 
@@ -145,7 +156,8 @@ export default function RobotMapWithMonitoring() {
           ROS: <span style={{ color: isConnected ? 'green' : 'red' }}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </span>
-          {robotPos && ` | Robot: (${robotPos.x.toFixed(2)}, ${robotPos.y.toFixed(2)})`}
+          {robotPos && ` | Position: (${robotPos.x.toFixed(2)}, ${robotPos.y.toFixed(2)})`}
+          {robotPos && ` | Heading: ${robotPos.heading} (${(robotPos.theta * 180/Math.PI).toFixed(1)}°)`}
         </div>
       </div>
 
@@ -158,9 +170,10 @@ export default function RobotMapWithMonitoring() {
             <tr>
               <th>ID</th>
               <th>Position (X,Y)</th>
-              <th>Status</th>
+              <th>Heading</th>
               <th>Timestamp</th>
-              <th>Actions</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -168,25 +181,15 @@ export default function RobotMapWithMonitoring() {
               <tr key={marker.id}>
                 <td>{marker.id.toString().slice(-4)}</td>
                 <td>({marker.x.toFixed(2)}, {marker.y.toFixed(2)})</td>
-                <td>
-                  <span style={{ 
-                    color: marker.status === 'active' ? 'green' : 'red',
-                    fontWeight: 'bold'
-                  }}>
-                    {marker.status.toUpperCase()}
-                  </span>
-                </td>
+                <td>{marker.heading}</td>
                 <td>{marker.timestamp}</td>
+                <td style={{ color: marker.status === 'active' ? 'green' : 'red' }}>
+                  {marker.status.toUpperCase()}
+                </td>
                 <td>
-                  <button 
-                    onClick={() => toggleMarker(marker.id)}
-                    style={styles.smallButton}
-                  >
-                    Toggle
-                  </button>
                   <button 
                     onClick={() => removeMarker(marker.id)}
-                    style={{ ...styles.smallButton, ...styles.dangerButton }}
+                    style={styles.smallButton}
                   >
                     Remove
                   </button>
@@ -200,7 +203,7 @@ export default function RobotMapWithMonitoring() {
   )
 }
 
-// Styles
+// Enhanced Styles
 const styles = {
   container: {
     display: 'flex',
@@ -220,28 +223,35 @@ const styles = {
     objectFit: 'contain',
     pointerEvents: 'none'
   },
-  robotMarker: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
+  robotBase: {
     width: '24px',
     height: '24px',
     backgroundColor: 'blue',
     borderRadius: '50%',
     border: '2px solid white',
-    zIndex: 20,
-    '::after': {
-      content: '""',
-      position: 'absolute',
-      top: '4px',
-      left: '50%',
-      width: '0',
-      height: '0',
-      borderLeft: '6px solid transparent',
-      borderRight: '6px solid transparent',
-      borderBottom: '12px solid white',
-      transform: 'translateX(-50%)'
-    }
+    position: 'relative'
+  },
+  robotHeading: {
+    position: 'absolute',
+    top: '-15px',
+    left: '50%',
+    width: '0',
+    height: '0',
+    borderLeft: '6px solid transparent',
+    borderRight: '6px solid transparent',
+    borderBottom: '15px solid red',
+    transform: 'translateX(-50%)'
+  },
+  headingLabel: {
+    position: 'absolute',
+    top: '-35px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'rgba(255,255,255,0.8)',
+    padding: '2px 5px',
+    borderRadius: '3px',
+    fontSize: '12px',
+    fontWeight: 'bold'
   },
   staticMarker: {
     position: 'absolute',
@@ -249,10 +259,22 @@ const styles = {
     top: '50%',
     width: '16px',
     height: '16px',
+    backgroundColor: '#4CAF50',
     borderRadius: '50%',
     border: '2px solid white',
     zIndex: 15,
-    transition: 'all 0.3s ease'
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  markerHeading: {
+    position: 'absolute',
+    top: '-20px',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    background: 'rgba(255,255,255,0.8)',
+    padding: '1px 3px',
+    borderRadius: '2px'
   },
   controlPanel: {
     width: '800px',
@@ -293,18 +315,15 @@ const styles = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    marginTop: '10px'
+    marginTop: '10px',
+    fontSize: '14px'
   },
   smallButton: {
     padding: '5px 10px',
     fontSize: '12px',
-    backgroundColor: '#f0f0f0',
-    border: '1px solid #ddd',
+    backgroundColor: '#ffebee',
+    border: '1px solid #ef9a9a',
     borderRadius: '3px',
     cursor: 'pointer'
-  },
-  dangerButton: {
-    backgroundColor: '#ffebee',
-    borderColor: '#ef9a9a'
   }
 }
