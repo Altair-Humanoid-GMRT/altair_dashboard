@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 
 const HierarchicalParameters = ({
   parameters,
+  descriptions,
   editingParam,
   newValue,
   setNewValue,
@@ -103,7 +104,13 @@ const HierarchicalParameters = ({
                       </svg>
                     )}
                   </div>
-                  <span className="font-medium text-gray-700">{key}</span>
+                  <span 
+                    className="font-medium text-gray-700"
+                    data-tooltip-id="param-tooltip"
+                    data-tooltip-content={descriptions[newPath]?.description || 'No description available'}
+                  >
+                    {key}
+                  </span>
                   <span className="ml-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100">
                     {Object.keys(value._children).length} parameter
                     {Object.keys(value._children).length !== 1 ? "s" : ""}
@@ -127,7 +134,13 @@ const HierarchicalParameters = ({
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-700">{key}</span>
+                      <span 
+                        className="font-medium text-gray-700"
+                        data-tooltip-id="param-tooltip"
+                        data-tooltip-content={descriptions[value.fullName]?.description || 'No description available'}
+                      >
+                        {key}
+                      </span>
                       <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                         {value.data.type === 1
                           ? "bool"
@@ -299,7 +312,11 @@ const HierarchicalParameters = ({
                   <div className="flex flex-col">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <span className="font-medium text-gray-700">
+                        <span 
+                          className="font-medium text-gray-700"
+                          data-tooltip-id="param-tooltip"
+                          data-tooltip-content={descriptions[paramName]?.description || 'No description available'}
+                        >
                           {paramName}
                         </span>
                         <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
@@ -361,7 +378,6 @@ const HierarchicalParameters = ({
           renderGroup(groupedParameters)
         )}
       </div>
-      {/* <div className="overflow-x-auto">{renderGroup(groupedParameters)}</div> */}
     </div>
   );
 };

@@ -1,14 +1,17 @@
 "use client";
 
 import ROSLIB from "roslib";
-// import * as ROS3D from "ros3d";
 import React, { useEffect, useState, useCallback } from "react";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 import HierarchicalParameters from "@/components/HierarchicalParameters";
 import History from "@/components/History";
 
 export default function Home() {
   const [parameters, setParameters] = useState({});
   const [editingParam, setEditingParam] = useState(null);
+  const [paramDescriptions, setParamDescriptions] = useState({});
+
   const [cmdParams, setCmdParams] = useState({
     x: 0.0,
     y: 0.0,
@@ -17,7 +20,7 @@ export default function Home() {
   const [newValue, setNewValue] = useState("");
 
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
-  const [connectionUri, setConnectionUri] = useState("ws://localhost:9090");
+  const [connectionUri, _setConnectionUri] = useState("ws://localhost:9090");
   const [retryCount, setRetryCount] = useState(0);
 
   const [isLoadingSave, setIsLoadingSave] = useState(false);
@@ -113,6 +116,7 @@ export default function Home() {
     paramClient.callService(request, (response) => {
       const paramNames = response.result.names;
       getParameterValues(paramNames);
+      getParameterDescriptions(paramNames);
     });
   }, [connectionStatus]);
 
@@ -163,13 +167,40 @@ export default function Home() {
             type: paramValue.type,
           };
         });
+        // console.log(params)
         setParameters(params);
       });
     },
     [connectionStatus]
   );
 
-  // Function to extract value from ParameterValue
+  const getParameterDescriptions = useCallback((paramNames) => {
+    if (!rosRef.current || connectionStatus !== "connected") {
+      return;
+    }
+
+    const paramClient = new ROSLIB.Service({
+      ros: rosRef.current,
+      name: "/quintic_walk/describe_parameters",
+      serviceType: "rcl_interfaces/srv/DescribeParameters",
+    });
+
+    const request = new ROSLIB.ServiceRequest({
+      names: paramNames,
+    });
+
+    paramClient.callService(request, (response) => {
+      const descriptions = {};
+      response.descriptors.forEach((descriptor) => {
+        descriptions[descriptor.name] = {
+          description: descriptor.description,
+        };
+      });
+      // console.log(descriptions);
+      setParamDescriptions(descriptions);
+    });
+  }, [connectionStatus]);
+
   const getValueFromParameterValue = (paramValue) => {
     switch (paramValue.type) {
       case 1: // PARAMETER_BOOL
@@ -374,9 +405,9 @@ export default function Home() {
               connectionStatus === "connected"
                 ? "bg-green-100 text-green-800"
                 : connectionStatus === "error"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+                  ? "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
           >
             {connectionStatus}
           </div>
@@ -456,7 +487,7 @@ export default function Home() {
                     key={paramName}
                     className={`${
                       index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
+                      } hover:bg-blue-50`}
                   >
                     <td className="p-3 border-t border-gray-200">
                       {paramName}
@@ -566,6 +597,7 @@ export default function Home() {
       {/* Parameters */}
       <HierarchicalParameters
         parameters={parameters}
+        descriptions={paramDescriptions}
         connectionStatus={connectionStatus}
         handleEdit={handleEdit}
         handleSave={handleSave}
@@ -629,7 +661,7 @@ export default function Home() {
               <h3
                 className={`text-lg font-medium ${
                   modalType === "success" ? "text-green-700" : "text-red-700"
-                }`}
+                  }`}
               >
                 {modalType === "success" ? "Success" : "Error"}
               </h3>
@@ -663,7 +695,7 @@ export default function Home() {
                   modalType === "success"
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700"
-                }`}
+                  }`}
               >
                 Close
               </button>
@@ -671,6 +703,13 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <Tooltip
+        id="param-tooltip"
+        place="right"
+        effect="solid"
+        className="z-[1000] max-w-xs bg-gray-800 text-white p-2 text-sm rounded shadow-lg"
+      />
     </div>
   );
 }
