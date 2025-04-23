@@ -4,6 +4,7 @@ import ROSLIB from "roslib";
 export default function History({
   rosRef,
   connectionStatus,
+  robotNamespace,
   onRestore,
   onRefresh,
 }) {
@@ -23,7 +24,7 @@ export default function History({
     if (connectionStatus === "connected") {
       fetchHistoryFiles();
     }
-  }, [connectionStatus]);
+  }, [connectionStatus, robotNamespace]);
 
   const fetchHistoryFiles = async () => {
     if (!rosRef.current || connectionStatus !== "connected") {
@@ -78,7 +79,7 @@ export default function History({
     const fileTopic = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/param_manager/file_path",
-      messageType: "std_msgs/String",
+      messageType: "std_msgs/msg/String",
     });
 
     fileTopic.publish(new ROSLIB.Message({ data: filePath }));
@@ -127,7 +128,7 @@ export default function History({
     const fileTopic = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/param_manager/file_path_preview",
-      messageType: "std_msgs/String",
+      messageType: "std_msgs/msg/String",
     });
 
     fileTopic.publish(new ROSLIB.Message({ data: file.path }));
@@ -178,7 +179,7 @@ export default function History({
     const deleteTopic = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/param_manager/file_path_delete",
-      messageType: "std_msgs/String",
+      messageType: "std_msgs/msg/String",
     });
 
     deleteTopic.publish(new ROSLIB.Message({ data: file.path }));
@@ -200,6 +201,14 @@ export default function History({
 
           if (response.success) {
             fetchHistoryFiles();
+            if (selectedFile?.path === file.path) {
+              setSelectedFile(null);
+              setPreviewParams(null);
+            }
+            if (compareFile?.path === file.path) {
+              setCompareFile(null);
+              setCompareParams(null);
+            }
           } else {
             setError(`Failed to delete file: ${response.message}`);
           }
@@ -209,8 +218,6 @@ export default function History({
           setError(`Service call failed: ${error}`);
         }
       );
-
-      fetchHistoryFiles();
     }, 500);
   };
 
@@ -236,7 +243,7 @@ export default function History({
     const fileTopic = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/param_manager/file_path_preview",
-      messageType: "std_msgs/String",
+      messageType: "std_msgs/msg/String",
     });
 
     fileTopic.publish(new ROSLIB.Message({ data: file.path }));
@@ -372,7 +379,7 @@ export default function History({
                     )}
                   <button
                     onClick={() => loadParameterFile(file.path)}
-                    className="text-green-600 hover:text-green-900"
+                    className="text-green-600 hover:text-green-900 mr-2"
                   >
                     Restore
                   </button>
@@ -530,43 +537,10 @@ export default function History({
     return <span className="font-mono text-sm">{value.toString()}</span>;
   };
 
-  // Flatten nested parameter structure for easier rendering
-  const flattenParams = (params, prefix = "") => {
-    let result = [];
-
-    for (const [key, value] of Object.entries(params)) {
-      const fullKey = prefix ? `${prefix}.${key}` : key;
-
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
-        // Recursive call for nested objects
-        result.push({
-          key: fullKey,
-          value: value,
-          isNested: true,
-        });
-
-        // Add the nested parameters as well
-        result = [...result, ...flattenParams(value, fullKey)];
-      } else {
-        result.push({
-          key: fullKey,
-          value: value,
-          isNested: false,
-        });
-      }
-    }
-
-    return result;
-  };
-
   const renderParameterPreview = () => {
     if (!previewParams) return null;
 
-    // Option 1: Display with hierarchy preserved
+    // Display with hierarchy preserved
     return (
       <div className="mt-4 bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-medium mb-4">Parameter Preview</h3>
@@ -641,8 +615,9 @@ export default function History({
           >
             <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
             <p className="mb-6">
-              Are you sure you want to delete "{selectedFileToDelete.filename}"? This
-              action cannot be undone.
+              Are you sure you want to delete &quot;
+              {selectedFileToDelete.filename}&quot;? This action cannot be
+              undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button

@@ -9,9 +9,25 @@ const HierarchicalParameters = ({
   handleEdit,
   handleSave,
   connectionStatus,
+  selectedParams,
+  onSelectionChange,
+  onSelectAll,
 }) => {
   const [expandedSections, setExpandedSections] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Calculate selection stats
+  const selectionStats = useMemo(() => {
+    const totalParams = Object.keys(parameters).length;
+    const selectedCount = Object.values(selectedParams).filter(Boolean).length;
+    return {
+      total: totalParams,
+      selected: selectedCount,
+      allSelected: totalParams > 0 && selectedCount === totalParams,
+      someSelected: selectedCount > 0 && selectedCount < totalParams,
+      noneSelected: selectedCount === 0,
+    };
+  }, [parameters, selectedParams]);
 
   // Group parameters by their hierarchy
   const groupedParameters = useMemo(() => {
@@ -104,10 +120,13 @@ const HierarchicalParameters = ({
                       </svg>
                     )}
                   </div>
-                  <span 
+                  <span
                     className="font-medium text-gray-700"
                     data-tooltip-id="param-tooltip"
-                    data-tooltip-content={descriptions[newPath]?.description || 'No description available'}
+                    data-tooltip-content={
+                      descriptions[newPath]?.description ||
+                      "No description available"
+                    }
                   >
                     {key}
                   </span>
@@ -134,10 +153,22 @@ const HierarchicalParameters = ({
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <span 
+                      <input
+                        type="checkbox"
+                        checked={selectedParams[value.fullName] || false}
+                        onChange={(e) =>
+                          onSelectionChange(value.fullName, e.target.checked)
+                        }
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
                         className="font-medium text-gray-700"
                         data-tooltip-id="param-tooltip"
-                        data-tooltip-content={descriptions[value.fullName]?.description || 'No description available'}
+                        data-tooltip-content={
+                          descriptions[value.fullName]?.description ||
+                          "No description available"
+                        }
                       >
                         {key}
                       </span>
@@ -202,11 +233,105 @@ const HierarchicalParameters = ({
     );
   };
 
+  const renderSearchResults = () => {
+    return (
+      <div>
+        {Object.entries(parameters)
+          .filter(([paramName]) =>
+            paramName.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .map(([paramName, paramData]) => (
+            <div
+              key={paramName}
+              className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded"
+            >
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedParams[paramName] || false}
+                      onChange={(e) =>
+                        onSelectionChange(paramName, e.target.checked)
+                      }
+                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span
+                      className="font-medium text-gray-700"
+                      data-tooltip-id="param-tooltip"
+                      data-tooltip-content={
+                        descriptions[paramName]?.description ||
+                        "No description available"
+                      }
+                    >
+                      {paramName}
+                    </span>
+                    <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                      {paramData.type === 1
+                        ? "bool"
+                        : paramData.type === 2
+                        ? "int"
+                        : paramData.type === 3
+                        ? "double"
+                        : paramData.type === 4
+                        ? "string"
+                        : paramData.type === 9
+                        ? "string[]"
+                        : "unknown"}
+                    </span>
+                  </div>
+                  <div>
+                    {editingParam === paramName ? (
+                      <button
+                        onClick={() => handleSave()}
+                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
+                        disabled={connectionStatus !== "connected"}
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleEdit(paramName, paramData.value)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
+                        disabled={connectionStatus !== "connected"}
+                      >
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  {editingParam === paramName ? (
+                    <input
+                      type="text"
+                      value={newValue}
+                      onChange={(e) => setNewValue(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <div className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700">
+                      {paramData.value?.toString() || "undefined"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+      </div>
+    );
+  };
+
   return (
     <div className="mb-8 bg-white rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-700">Parameters</h2>
         <div className="flex space-x-2">
+          <div className="text-sm text-gray-500">
+            {selectionStats.selected} of {selectionStats.total} parameters
+            selected
+          </div>
           <button
             className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm flex items-center"
             onClick={() => setExpandedSections({})}
@@ -268,6 +393,26 @@ const HierarchicalParameters = ({
       </div>
 
       <div className="border-b border-gray-200 mb-4"></div>
+
+      {/* Parameter selection controls */}
+      <div className="mb-4 flex items-center space-x-3">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            checked={selectionStats.allSelected}
+            onChange={(e) => onSelectAll(e.target.checked)}
+          />
+          <span className="ml-2 text-sm font-medium text-gray-700">
+            {selectionStats.allSelected
+              ? "Deselect All"
+              : selectionStats.someSelected
+              ? "Select All"
+              : "Select All"}
+          </span>
+        </label>
+      </div>
+
       {/* Search input */}
       <div className="mb-4">
         <div className="relative">
@@ -298,85 +443,7 @@ const HierarchicalParameters = ({
       </div>
 
       <div className="overflow-x-auto">
-        {searchTerm ? (
-          <div>
-            {Object.entries(parameters)
-              .filter(([paramName]) =>
-                paramName.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map(([paramName, paramData]) => (
-                <div
-                  key={paramName}
-                  className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded"
-                >
-                  <div className="flex flex-col">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span 
-                          className="font-medium text-gray-700"
-                          data-tooltip-id="param-tooltip"
-                          data-tooltip-content={descriptions[paramName]?.description || 'No description available'}
-                        >
-                          {paramName}
-                        </span>
-                        <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                          {paramData.type === 1
-                            ? "bool"
-                            : paramData.type === 2
-                            ? "int"
-                            : paramData.type === 3
-                            ? "double"
-                            : paramData.type === 4
-                            ? "string"
-                            : paramData.type === 9
-                            ? "string[]"
-                            : "unknown"}
-                        </span>
-                      </div>
-                      <div>
-                        {editingParam === paramName ? (
-                          <button
-                            onClick={() => handleSave()}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
-                            disabled={connectionStatus !== "connected"}
-                          >
-                            Save
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() =>
-                              handleEdit(paramName, paramData.value)
-                            }
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-                            disabled={connectionStatus !== "connected"}
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      {editingParam === paramName ? (
-                        <input
-                          type="text"
-                          value={newValue}
-                          onChange={(e) => setNewValue(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <div className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700">
-                          {paramData.value?.toString() || "undefined"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : (
-          renderGroup(groupedParameters)
-        )}
+        {searchTerm ? renderSearchResults() : renderGroup(groupedParameters)}
       </div>
     </div>
   );

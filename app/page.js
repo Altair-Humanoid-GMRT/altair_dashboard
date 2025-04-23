@@ -1,16 +1,18 @@
 "use client";
 
 import ROSLIB from "roslib";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 import HierarchicalParameters from "@/components/HierarchicalParameters";
 import History from "@/components/History";
+import ConnectionManager from "@/components/ConnectionManager";
 
 export default function Home() {
   const [parameters, setParameters] = useState({});
   const [editingParam, setEditingParam] = useState(null);
   const [paramDescriptions, setParamDescriptions] = useState({});
+  const [selectedParams, setSelectedParams] = useState({});
 
   const [cmdParams, setCmdParams] = useState({
     x: 0.0,
@@ -20,7 +22,13 @@ export default function Home() {
   const [newValue, setNewValue] = useState("");
 
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
-  const [connectionUri, _setConnectionUri] = useState("ws://localhost:9090");
+  const [connectionUri, setConnectionUri] = useState(() => {
+    // Get from localStorage or use default
+    return localStorage.getItem("ros_connection_uri") || "ws://localhost:9090";
+  });
+  const [robotNamespace, setRobotNamespace] = useState(() => {
+    return localStorage.getItem("ros_robot_namespace") || "/quintic_walk";
+  });
   const [retryCount, setRetryCount] = useState(0);
 
   const [isLoadingSave, setIsLoadingSave] = useState(false);
@@ -28,12 +36,43 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("");
   const [modalMessage, setModalMessage] = useState("");
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const MAX_RETRIES = 5;
   const RETRY_DELAY = 3500;
 
   // Create a ref to store the ROS instance
-  const rosRef = React.useRef(null);
+  const rosRef = useRef(null);
+
+  // Load selected parameters from localStorage
+  useEffect(() => {
+    try {
+      const storedSelectedParams = localStorage.getItem("selected_parameters");
+      if (storedSelectedParams) {
+        setSelectedParams(JSON.parse(storedSelectedParams));
+      }
+    } catch (error) {
+      console.error("Error loading selected parameters:", error);
+    }
+  }, []);
+
+  // Update selectedParams when parameters change (select all by default)
+  useEffect(() => {
+    if (
+      Object.keys(parameters).length > 0 &&
+      Object.keys(selectedParams).length === 0
+    ) {
+      const initialSelection = {};
+      Object.keys(parameters).forEach((param) => {
+        initialSelection[param] = true;
+      });
+      setSelectedParams(initialSelection);
+      localStorage.setItem(
+        "selected_parameters",
+        JSON.stringify(initialSelection)
+      );
+    }
+  }, [parameters, selectedParams]);
 
   // Initialize ROS connection
   const initRosConnection = useCallback(() => {
@@ -44,10 +83,15 @@ export default function Home() {
       rosRef.current = null;
     }
 
+    // Save connection URI to localStorage
+    localStorage.setItem("ros_connection_uri", connectionUri);
+    localStorage.setItem("ros_robot_namespace", robotNamespace);
+
     rosRef.current = new ROSLIB.Ros({
       url: connectionUri,
     });
-    console.log(connectionUri);
+    console.log("Connecting to:", connectionUri);
+    console.log("Using namespace:", robotNamespace);
 
     rosRef.current.on("connection", () => {
       console.log("Connected to websocket server.");
@@ -82,7 +126,7 @@ export default function Home() {
         }, RETRY_DELAY);
       }
     });
-  }, [retryCount]);
+  }, [connectionUri, retryCount, robotNamespace]);
 
   // Initialize connection on component mount
   useEffect(() => {
@@ -107,18 +151,27 @@ export default function Home() {
 
     const paramClient = new ROSLIB.Service({
       ros: rosRef.current,
-      name: "/quintic_walk/list_parameters",
+      name: `${robotNamespace}/list_parameters`,
       serviceType: "rcl_interfaces/srv/ListParameters",
     });
 
     const request = new ROSLIB.ServiceRequest({});
 
-    paramClient.callService(request, (response) => {
-      const paramNames = response.result.names;
-      getParameterValues(paramNames);
-      getParameterDescriptions(paramNames);
-    });
-  }, [connectionStatus]);
+    paramClient.callService(
+      request,
+      (response) => {
+        const paramNames = response.result.names;
+        getParameterValues(paramNames);
+        getParameterDescriptions(paramNames);
+      },
+      (error) => {
+        console.error("Error fetching parameters:", error);
+        setModalType("error");
+        setModalMessage(`Failed to fetch parameters: ${error}`);
+        setShowModal(true);
+      }
+    );
+  }, [connectionStatus, robotNamespace]);
 
   const fetchROSParameters = useCallback(() => {
     if (!rosRef.current || connectionStatus !== "connected") {
@@ -130,9 +183,15 @@ export default function Home() {
       ros: rosRef.current,
     });
 
-    paramClient.get(null, (params) => {
-      console.log(params);
-    });
+    paramClient.get(
+      null,
+      (params) => {
+        console.log("ROS Parameters:", params);
+      },
+      (error) => {
+        console.error("Error fetching ROS parameters:", error);
+      }
+    );
   }, [connectionStatus]);
 
   // Function to handle refresh (rerender)
@@ -150,7 +209,7 @@ export default function Home() {
 
       const paramClient = new ROSLIB.Service({
         ros: rosRef.current,
-        name: "/quintic_walk/get_parameters",
+        name: `${robotNamespace}/get_parameters`,
         serviceType: "rcl_interfaces/srv/GetParameters",
       });
 
@@ -158,48 +217,61 @@ export default function Home() {
         names: paramNames,
       });
 
-      paramClient.callService(request, (response) => {
-        const params = {};
-        paramNames.forEach((name, index) => {
-          const paramValue = response.values[index];
-          params[name] = {
-            value: getValueFromParameterValue(paramValue),
-            type: paramValue.type,
-          };
-        });
-        // console.log(params)
-        setParameters(params);
-      });
+      paramClient.callService(
+        request,
+        (response) => {
+          const params = {};
+          paramNames.forEach((name, index) => {
+            const paramValue = response.values[index];
+            params[name] = {
+              value: getValueFromParameterValue(paramValue),
+              type: paramValue.type,
+            };
+          });
+          setParameters(params);
+        },
+        (error) => {
+          console.error("Error getting parameter values:", error);
+        }
+      );
     },
-    [connectionStatus]
+    [connectionStatus, robotNamespace]
   );
 
-  const getParameterDescriptions = useCallback((paramNames) => {
-    if (!rosRef.current || connectionStatus !== "connected") {
-      return;
-    }
+  const getParameterDescriptions = useCallback(
+    (paramNames) => {
+      if (!rosRef.current || connectionStatus !== "connected") {
+        return;
+      }
 
-    const paramClient = new ROSLIB.Service({
-      ros: rosRef.current,
-      name: "/quintic_walk/describe_parameters",
-      serviceType: "rcl_interfaces/srv/DescribeParameters",
-    });
-
-    const request = new ROSLIB.ServiceRequest({
-      names: paramNames,
-    });
-
-    paramClient.callService(request, (response) => {
-      const descriptions = {};
-      response.descriptors.forEach((descriptor) => {
-        descriptions[descriptor.name] = {
-          description: descriptor.description,
-        };
+      const paramClient = new ROSLIB.Service({
+        ros: rosRef.current,
+        name: `${robotNamespace}/describe_parameters`,
+        serviceType: "rcl_interfaces/srv/DescribeParameters",
       });
-      // console.log(descriptions);
-      setParamDescriptions(descriptions);
-    });
-  }, [connectionStatus]);
+
+      const request = new ROSLIB.ServiceRequest({
+        names: paramNames,
+      });
+
+      paramClient.callService(
+        request,
+        (response) => {
+          const descriptions = {};
+          response.descriptors.forEach((descriptor) => {
+            descriptions[descriptor.name] = {
+              description: descriptor.description,
+            };
+          });
+          setParamDescriptions(descriptions);
+        },
+        (error) => {
+          console.error("Error getting parameter descriptions:", error);
+        }
+      );
+    },
+    [connectionStatus, robotNamespace]
+  );
 
   const getValueFromParameterValue = (paramValue) => {
     switch (paramValue.type) {
@@ -222,7 +294,7 @@ export default function Home() {
   const updateParameter = (paramName, value) => {
     const paramClient = new ROSLIB.Service({
       ros: rosRef.current,
-      name: "/quintic_walk/set_parameters",
+      name: `${robotNamespace}/set_parameters`,
       serviceType: "rcl_interfaces/srv/SetParameters",
     });
 
@@ -245,7 +317,7 @@ export default function Home() {
     // Set the appropriate value field based on the parameter type
     switch (paramType) {
       case 1: // PARAMETER_BOOL
-        parameter.value.bool_value = value === "true"; // Convert string to boolean
+        parameter.value.bool_value = value === "true" || value === true; // Convert string to boolean
         break;
       case 2: // PARAMETER_INTEGER
         parameter.value.integer_value = parseInt(value, 10);
@@ -257,7 +329,9 @@ export default function Home() {
         parameter.value.string_value = value;
         break;
       case 9: // PARAMETER_STRING_ARRAY
-        parameter.value.string_array_value = value.split(","); // Convert string to array
+        parameter.value.string_array_value = Array.isArray(value)
+          ? value
+          : value.split(","); // Convert string to array
         break;
       default:
         console.error(`Unsupported parameter type: ${paramType}`);
@@ -270,54 +344,100 @@ export default function Home() {
     });
 
     // Call the service
-    paramClient.callService(request, (response) => {
-      if (response.results[0].successful) {
-        console.log(`Parameter ${paramName} updated successfully.`);
-        fetchAllParameters(); // Refresh the parameter list
-      } else {
-        console.error(response.results[0]);
-        console.error(`Failed to update parameter ${paramName}.`);
+    paramClient.callService(
+      request,
+      (response) => {
+        if (response.results[0].successful) {
+          console.log(`Parameter ${paramName} updated successfully.`);
+          fetchAllParameters(); // Refresh the parameter list
+        } else {
+          console.error(response.results[0]);
+          console.error(`Failed to update parameter ${paramName}.`);
+
+          setModalType("error");
+          setModalMessage(
+            `Failed to update parameter ${paramName}: ${response.results[0].reason}`
+          );
+          setShowModal(true);
+        }
+      },
+      (error) => {
+        console.error(`Service call failed: ${error}`);
+        setModalType("error");
+        setModalMessage(`Failed to update parameter: ${error}`);
+        setShowModal(true);
       }
-    });
+    );
   };
 
   const saveParameters = () => {
     if (!rosRef.current || connectionStatus !== "connected") {
-      console.warn("Cannot save parameters: ROS connection not established");
-
       setModalType("error");
       setModalMessage("Cannot save parameters: ROS connection not established");
       setShowModal(true);
       return;
     }
 
+    // Create a list of parameters to save based on selection
+    const paramsToSave = Object.keys(selectedParams)
+      .filter((param) => selectedParams[param])
+      .join(",");
+
+    // If nothing is selected, show warning
+    if (!paramsToSave) {
+      setModalType("warning");
+      setModalMessage("Please select at least one parameter to save");
+      setShowModal(true);
+      return;
+    }
+
     setIsLoadingSave(true);
 
-    const paramClient = new ROSLIB.Service({
+    // First publish the parameter list to save
+    const paramListTopic = new ROSLIB.Topic({
       ros: rosRef.current,
-      name: "/param_manager/save_parameters",
-      serviceType: "std_srvs/srv/Trigger",
+      name: "/param_manager/params_to_save",
+      messageType: "std_msgs/String",
     });
 
-    const request = new ROSLIB.ServiceRequest({});
-    paramClient.callService(request, (response) => {
-      if (response.success) {
-        setIsLoadingSave(false);
-        console.log("Parameters saved successfully.");
-        setModalType("success");
-        setModalMessage("Parameters saved successfully.");
-        setShowModal(true);
-        handleRefresh();
-      } else {
-        setIsLoadingSave(false);
-        console.error("Failed to save parameters.");
-        setModalType("error");
-        setModalMessage("Failed to save parameters: " + response.message);
-        setShowModal(true);
-      }
+    paramListTopic.publish(new ROSLIB.Message({ data: paramsToSave }));
 
-      // Modal UI will be rendered in the JSX
-    });
+    // Wait a moment for the topic to be received
+    setTimeout(() => {
+      const paramClient = new ROSLIB.Service({
+        ros: rosRef.current,
+        name: "/param_manager/save_parameters",
+        serviceType: "std_srvs/srv/Trigger",
+      });
+
+      const request = new ROSLIB.ServiceRequest({});
+      paramClient.callService(
+        request,
+        (response) => {
+          if (response.success) {
+            setIsLoadingSave(false);
+            console.log("Parameters saved successfully.");
+            setModalType("success");
+            setModalMessage("Parameters saved successfully.");
+            setShowModal(true);
+            handleRefresh();
+          } else {
+            setIsLoadingSave(false);
+            console.error("Failed to save parameters.");
+            setModalType("error");
+            setModalMessage("Failed to save parameters: " + response.message);
+            setShowModal(true);
+          }
+        },
+        (error) => {
+          setIsLoadingSave(false);
+          console.error(`Service call failed: ${error}`);
+          setModalType("error");
+          setModalMessage(`Failed to save parameters: ${error}`);
+          setShowModal(true);
+        }
+      );
+    }, 300);
   };
 
   // Function to handle editing a parameter
@@ -336,7 +456,14 @@ export default function Home() {
   };
 
   const handlePlayRobot = (x, y, z) => {
-    console.log(cmdParams);
+    if (!rosRef.current || connectionStatus !== "connected") {
+      setModalType("error");
+      setModalMessage("Cannot control robot: ROS connection not established");
+      setShowModal(true);
+      return;
+    }
+
+    console.log("Sending cmd_vel", { x, y, z });
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/cmd_vel",
@@ -359,7 +486,14 @@ export default function Home() {
     cmdVel.publish(twist);
   };
 
-  const handleStopRobot = (x, y, z) => {
+  const handleStopRobot = () => {
+    if (!rosRef.current || connectionStatus !== "connected") {
+      setModalType("error");
+      setModalMessage("Cannot control robot: ROS connection not established");
+      setShowModal(true);
+      return;
+    }
+
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/cmd_vel",
@@ -368,14 +502,14 @@ export default function Home() {
 
     const twist = new ROSLIB.Message({
       linear: {
-        x,
-        y,
+        x: 0.0,
+        y: 0.0,
         z: 0.0,
       },
       angular: {
         x: -1.0,
         y: 0.0,
-        z,
+        z: 0.0,
       },
     });
 
@@ -394,6 +528,36 @@ export default function Home() {
     }
   };
 
+  const handleParamSelectionChange = (paramName, isSelected) => {
+    setSelectedParams((prev) => {
+      const updated = { ...prev, [paramName]: isSelected };
+      localStorage.setItem("selected_parameters", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleSelectAllParams = (isSelected) => {
+    const updated = {};
+    Object.keys(parameters).forEach((param) => {
+      updated[param] = isSelected;
+    });
+    setSelectedParams(updated);
+    localStorage.setItem("selected_parameters", JSON.stringify(updated));
+  };
+
+  const applySettings = (newConnectionUri, newRobotNamespace) => {
+    // Only reconnect if settings actually changed
+    if (
+      newConnectionUri !== connectionUri ||
+      newRobotNamespace !== robotNamespace
+    ) {
+      setConnectionUri(newConnectionUri);
+      setRobotNamespace(newRobotNamespace);
+      // Connection will be reinitialized by useEffect
+    }
+    setShowSettingsModal(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6">
       {/* Header */}
@@ -405,56 +569,58 @@ export default function Home() {
               connectionStatus === "connected"
                 ? "bg-green-100 text-green-800"
                 : connectionStatus === "error"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-yellow-100 text-yellow-800"
-              }`}
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
           >
-            {connectionStatus}
+            {connectionStatus === "connected"
+              ? "Connected"
+              : connectionStatus === "error"
+              ? "Connection Error"
+              : "Disconnected"}
           </div>
         </div>
-        {/* <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={connectionUri}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setConnectionUri(e.target.value)
-            }
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="ws://localhost:9090"
-          />
+        <div className="flex gap-2">
           <button
-            onClick={() => {
-              if (rosRef.current) {
-                rosRef.current.removeAllListeners();
-                rosRef.current.close();
-                rosRef.current = null;
-              }
-              initRosConnection();
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            onClick={() => setShowSettingsModal(true)}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
-            Apply
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Settings
+            </div>
           </button>
-        </div> */}
-        <button
-          onClick={handleRefresh}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={connectionStatus !== "connected"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={connectionStatus !== "connected"}
           >
-            <path
-              fillRule="evenodd"
-              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Refresh
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Refresh
+          </button>
+        </div>
       </header>
 
       {/* Command Parameters */}
@@ -482,12 +648,12 @@ export default function Home() {
             </thead>
             <tbody>
               {Object.entries(cmdParams).map(
-                ([paramName, paramData], index) => (
+                ([paramName, paramValue], index) => (
                   <tr
                     key={paramName}
                     className={`${
                       index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-blue-50`}
+                    } hover:bg-blue-50`}
                   >
                     <td className="p-3 border-t border-gray-200">
                       {paramName}
@@ -495,14 +661,15 @@ export default function Home() {
                     <td className="p-3 border-t border-gray-200">
                       {editingParam === paramName ? (
                         <input
-                          type="text"
+                          type="number"
+                          step="0.1"
                           value={newValue}
                           onChange={(e) => setNewValue(e.target.value)}
                           className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
                         <span className="font-mono">
-                          {paramData?.toString() || "undefined"}
+                          {paramValue?.toString() || "0.0"}
                         </span>
                       )}
                     </td>
@@ -517,7 +684,7 @@ export default function Home() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleEdit(paramName, paramData)}
+                          onClick={() => handleEdit(paramName, paramValue)}
                           className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
                           disabled={connectionStatus !== "connected"}
                         >
@@ -539,7 +706,7 @@ export default function Home() {
       </div>
 
       {/* Robot Controls */}
-      <div className="flex justify-center space-x-4 mb-8">
+      <div className="flex flex-wrap gap-4 justify-center mb-8">
         <button
           onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
           className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
@@ -553,15 +720,74 @@ export default function Home() {
           >
             <path
               fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z"
               clipRule="evenodd"
             />
           </svg>
           Play
         </button>
+        <button
+          onClick={() => handlePlayRobot(cmdParams.x, 0, 0)}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Forward
+        </button>
 
         <button
-          onClick={() => handleStopRobot(0.0, 0.0, 0.0)}
+          onClick={() => handlePlayRobot(0, cmdParams.y, 0)}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-3.707-8.707a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L10 8.414l-1.293 1.293a1 1 0 01-1.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Lateral
+        </button>
+
+        <button
+          onClick={() => handlePlayRobot(0, 0, cmdParams.z)}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-7.293a1 1 0 011.414 0L11 11.586V8a1 1 0 012 0v3.586l.88-.88a1 1 0 111.414 1.415l-2.121 2.121a1 1 0 01-1.414 0l-2.122-2.121a1 1 0 010-1.415z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Rotate
+        </button>
+
+        <button
+          onClick={handleStopRobot}
           className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
           disabled={connectionStatus !== "connected"}
         >
@@ -585,11 +811,13 @@ export default function Home() {
       <History
         rosRef={rosRef}
         connectionStatus={connectionStatus}
+        robotNamespace={robotNamespace}
         onRestore={() => {
           // Function to call after a parameter file is restored
           setModalType("success");
           setModalMessage("Parameters restored successfully");
           setShowModal(true);
+          handleRefresh();
         }}
         onRefresh={handleRefresh}
       />
@@ -604,6 +832,9 @@ export default function Home() {
         setNewValue={setNewValue}
         newValue={newValue}
         editingParam={editingParam}
+        selectedParams={selectedParams}
+        onSelectionChange={handleParamSelectionChange}
+        onSelectAll={handleSelectAllParams}
       />
 
       {/* Save Button */}
@@ -647,7 +878,7 @@ export default function Home() {
               >
                 <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
               </svg>
-              Save Parameters to File
+              Save Selected Parameters to File
             </>
           )}
         </button>
@@ -660,10 +891,18 @@ export default function Home() {
             <div className="flex justify-between items-center mb-4">
               <h3
                 className={`text-lg font-medium ${
-                  modalType === "success" ? "text-green-700" : "text-red-700"
-                  }`}
+                  modalType === "success"
+                    ? "text-green-700"
+                    : modalType === "warning"
+                    ? "text-yellow-700"
+                    : "text-red-700"
+                }`}
               >
-                {modalType === "success" ? "Success" : "Error"}
+                {modalType === "success"
+                  ? "Success"
+                  : modalType === "warning"
+                  ? "Warning"
+                  : "Error"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -694,14 +933,26 @@ export default function Home() {
                 className={`px-4 py-2 rounded-md text-white ${
                   modalType === "success"
                     ? "bg-green-600 hover:bg-green-700"
+                    : modalType === "warning"
+                    ? "bg-yellow-600 hover:bg-yellow-700"
                     : "bg-red-600 hover:bg-red-700"
-                  }`}
+                }`}
               >
                 Close
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <ConnectionManager
+          currentUri={connectionUri}
+          currentNamespace={robotNamespace}
+          onApply={applySettings}
+          onCancel={() => setShowSettingsModal(false)}
+        />
       )}
 
       <Tooltip
