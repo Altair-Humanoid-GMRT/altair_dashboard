@@ -24,9 +24,15 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [connectionUri, setConnectionUri] = useState(() => {
     // Get from localStorage or use default
+    if (typeof window === "undefined") {
+      return "ws://localhost:9090";
+    }
     return localStorage.getItem("ros_connection_uri") || "ws://localhost:9090";
   });
   const [robotNamespace, setRobotNamespace] = useState(() => {
+    if (typeof window === "undefined") {
+      return "/quintic_walk";
+    }
     return localStorage.getItem("ros_robot_namespace") || "/quintic_walk";
   });
   const [retryCount, setRetryCount] = useState(0);
@@ -47,6 +53,9 @@ export default function Home() {
   // Load selected parameters from localStorage
   useEffect(() => {
     try {
+      if (typeof window === "undefined") {
+        return;
+      }
       const storedSelectedParams = localStorage.getItem("selected_parameters");
       if (storedSelectedParams) {
         setSelectedParams(JSON.parse(storedSelectedParams));
@@ -516,6 +525,27 @@ export default function Home() {
     cmdVel.publish(twist);
   };
 
+  const handleRobotKick = () => {
+    if (!rosRef.current || connectionStatus !== "connected") {
+      setModalType("error");
+      setModalMessage("Cannot control robot: ROS connection not established");
+      setShowModal(true);
+      return;
+    }
+
+    const cmdVel = new ROSLIB.Topic({
+      ros: rosRef.current,
+      name: "/kick",
+      messageType: "std_msgs/msg/Bool",
+    });
+
+    const kick = new ROSLIB.Message({
+      data: true,
+    });
+
+    cmdVel.publish(kick);
+  };
+
   const handleCmdParamsSave = () => {
     if (editingParam !== null) {
       setCmdParams((prevCmdParams) => ({
@@ -726,7 +756,7 @@ export default function Home() {
           </svg>
           Play
         </button>
-        <button
+        {/* <button
           onClick={() => handlePlayRobot(cmdParams.x, 0, 0)}
           className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
           disabled={connectionStatus !== "connected"}
@@ -784,7 +814,7 @@ export default function Home() {
             />
           </svg>
           Rotate
-        </button>
+        </button> */}
 
         <button
           onClick={handleStopRobot}
@@ -804,6 +834,26 @@ export default function Home() {
             />
           </svg>
           Stop
+        </button>
+
+        <button
+          onClick={handleRobotKick}
+          className="flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 font-medium"
+          disabled={connectionStatus !== "connected"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Kick
         </button>
       </div>
 
