@@ -736,15 +736,17 @@ export default function Home() {
       </div>
 
       {/* Robot Controls */}
-      <div className="flex flex-wrap gap-4 justify-center mb-8">
-        <button
+        <div className="fixed bottom-8 right-8 z-50">
+          <div className="flex flex-col gap-2">
+            <button
           onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
-          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+          className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg"
           disabled={connectionStatus !== "connected"}
-        >
+          title="Play"
+            >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-6 w-6"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -754,76 +756,18 @@ export default function Home() {
               clipRule="evenodd"
             />
           </svg>
-          Play
-        </button>
-        {/* <button
-          onClick={() => handlePlayRobot(cmdParams.x, 0, 0)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
-          disabled={connectionStatus !== "connected"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Forward
-        </button>
+          <span className="font-medium">Play</span>
+            </button>
 
-        <button
-          onClick={() => handlePlayRobot(0, cmdParams.y, 0)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
-          disabled={connectionStatus !== "connected"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-3.707-8.707a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L10 8.414l-1.293 1.293a1 1 0 01-1.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Lateral
-        </button>
-
-        <button
-          onClick={() => handlePlayRobot(0, 0, cmdParams.z)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
-          disabled={connectionStatus !== "connected"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-7.293a1 1 0 011.414 0L11 11.586V8a1 1 0 012 0v3.586l.88-.88a1 1 0 111.414 1.415l-2.121 2.121a1 1 0 01-1.414 0l-2.122-2.121a1 1 0 010-1.415z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Rotate
-        </button> */}
-
-        <button
+            <button
           onClick={handleStopRobot}
-          className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+          className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 shadow-lg"
           disabled={connectionStatus !== "connected"}
-        >
+          title="Stop"
+            >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-6 w-6"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -833,17 +777,18 @@ export default function Home() {
               clipRule="evenodd"
             />
           </svg>
-          Stop
-        </button>
+          <span className="font-medium">Stop</span>
+            </button>
 
-        <button
+            <button
           onClick={handleRobotKick}
-          className="flex items-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 font-medium"
+          className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50 shadow-lg"
           disabled={connectionStatus !== "connected"}
-        >
+          title="Kick"
+            >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-6 w-6"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -853,11 +798,12 @@ export default function Home() {
               clipRule="evenodd"
             />
           </svg>
-          Kick
-        </button>
-      </div>
+          <span className="font-medium">Kick</span>
+            </button>
+          </div>
+        </div>
 
-      {/* Add the History Section */}
+        {/* Add the History Section */}
       <History
         rosRef={rosRef}
         connectionStatus={connectionStatus}
