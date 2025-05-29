@@ -54,7 +54,7 @@ jobs:
 
       - name: Build with Next.js
         run: npm run build
-        env:
+        #env:
           # Remove or comment out this line for custom domains
           # PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
 
