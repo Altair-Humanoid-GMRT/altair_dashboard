@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -16,10 +16,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true, // Disable default image optimization
   },
-  assetPrefix: isProd ? '/altair_dashboard' : '',
-  basePath: isProd ? '/altair_dashboard' : '',
-  output: 'export',
+  // assetPrefix: isProd ? '/altair_dashboard' : '',
+  // basePath: isProd ? '/altair_dashboard' : '',
+  output: "export",
 };
 
 export default nextConfig;
-
