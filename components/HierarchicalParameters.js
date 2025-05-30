@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 
 const HierarchicalParameters = ({
   parameters,
@@ -15,6 +15,58 @@ const HierarchicalParameters = ({
 }) => {
   const [expandedSections, setExpandedSections] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [localEditingParam, setLocalEditingParam] = useState(null);
+  const [localNewValue, setLocalNewValue] = useState("");
+  const inputRef = useRef(null);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (localEditingParam && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [localEditingParam]);
+
+  // Handle single-click to edit
+  const handleSingleClick = (paramName, currentValue) => {
+    if (connectionStatus !== "connected") return;
+    setLocalEditingParam(paramName);
+    setLocalNewValue(currentValue?.toString() || "");
+  };
+
+  // Handle key press in input
+  const handleKeyPress = (e, paramName) => {
+    if (e.key === "Enter") {
+      handleSaveLocal(paramName);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
+  // Handle save
+  const handleSaveLocal = (paramName) => {
+    if (localNewValue !== "") {
+      // Use the parent's update function
+      handleEdit(paramName, parameters[paramName]?.value);
+      setNewValue(localNewValue);
+      setTimeout(() => {
+        handleSave();
+      }, 0);
+    }
+    setLocalEditingParam(null);
+    setLocalNewValue("");
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setLocalEditingParam(null);
+    setLocalNewValue("");
+  };
+
+  // Handle input blur (save on focus loss)
+  const handleBlur = (paramName) => {
+    handleSaveLocal(paramName);
+  };
 
   // Calculate selection stats
   const selectionStats = useMemo(() => {
@@ -144,7 +196,8 @@ const HierarchicalParameters = ({
               </div>
             );
           } else if (value.data) {
-            // Render actual parameter
+            // Render actual parameter with single-click editing
+            const isEditing = localEditingParam === value.fullName;
             return (
               <div
                 key={newPath}
@@ -186,40 +239,43 @@ const HierarchicalParameters = ({
                           : "unknown"}
                       </span>
                     </div>
-                    <div>
-                      {editingParam === value.fullName ? (
-                        <button
-                          onClick={() => handleSave()}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            handleEdit(value.fullName, value.data.value)
-                          }
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
+                    {connectionStatus === "connected" && (
+                      <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                        Click to edit
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-2">
-                    {editingParam === value.fullName ? (
+                    {isEditing ? (
                       <input
+                        ref={inputRef}
                         type="text"
-                        value={newValue}
-                        onChange={(e) => setNewValue(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={localNewValue}
+                        onChange={(e) => setLocalNewValue(e.target.value)}
+                        onKeyDown={(e) => handleKeyPress(e, value.fullName)}
+                        onBlur={() => handleBlur(value.fullName)}
+                        className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Press Enter to save, Escape to cancel"
                       />
                     ) : (
-                      <div className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700">
+                      <div
+                        className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group"
+                        onClick={() =>
+                          handleSingleClick(value.fullName, value.data.value)
+                        }
+                        title={
+                          connectionStatus === "connected"
+                            ? "Click to edit"
+                            : "Connect to ROS to edit"
+                        }
+                      >
                         {value.data.value?.toString() || "undefined"}
+                        {connectionStatus === "connected" && (
+                          <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
+                            ✏️
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -240,85 +296,93 @@ const HierarchicalParameters = ({
           .filter(([paramName]) =>
             paramName.toLowerCase().includes(searchTerm.toLowerCase())
           )
-          .map(([paramName, paramData]) => (
-            <div
-              key={paramName}
-              className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded"
-            >
-              <div className="flex flex-col">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedParams[paramName] || false}
-                      onChange={(e) =>
-                        onSelectionChange(paramName, e.target.checked)
-                      }
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <span
-                      className="font-medium text-gray-700"
-                      data-tooltip-id="param-tooltip"
-                      data-tooltip-content={
-                        descriptions[paramName]?.description ||
-                        "No description available"
-                      }
-                    >
-                      {paramName}
-                    </span>
-                    <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                      {paramData.type === 1
-                        ? "bool"
-                        : paramData.type === 2
-                        ? "int"
-                        : paramData.type === 3
-                        ? "double"
-                        : paramData.type === 4
-                        ? "string"
-                        : paramData.type === 9
-                        ? "string[]"
-                        : "unknown"}
-                    </span>
+          .map(([paramName, paramData]) => {
+            const isEditing = localEditingParam === paramName;
+            return (
+              <div
+                key={paramName}
+                className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded group"
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedParams[paramName] || false}
+                        onChange={(e) =>
+                          onSelectionChange(paramName, e.target.checked)
+                        }
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        className="font-medium text-gray-700"
+                        data-tooltip-id="param-tooltip"
+                        data-tooltip-content={
+                          descriptions[paramName]?.description ||
+                          "No description available"
+                        }
+                      >
+                        {paramName}
+                      </span>
+                      <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                        {paramData.type === 1
+                          ? "bool"
+                          : paramData.type === 2
+                          ? "int"
+                          : paramData.type === 3
+                          ? "double"
+                          : paramData.type === 4
+                          ? "string"
+                          : paramData.type === 9
+                          ? "string[]"
+                          : "unknown"}
+                      </span>
+                    </div>
+                    {connectionStatus === "connected" && (
+                      <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                        Click to edit
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    {editingParam === paramName ? (
-                      <button
-                        onClick={() => handleSave()}
-                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 text-sm"
-                        disabled={connectionStatus !== "connected"}
-                      >
-                        Save
-                      </button>
+
+                  <div className="mt-2">
+                    {isEditing ? (
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={localNewValue}
+                        onChange={(e) => setLocalNewValue(e.target.value)}
+                        onKeyDown={(e) => handleKeyPress(e, paramName)}
+                        onBlur={() => handleBlur(paramName)}
+                        className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Press Enter to save, Escape to cancel"
+                      />
                     ) : (
-                      <button
-                        onClick={() => handleEdit(paramName, paramData.value)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-                        disabled={connectionStatus !== "connected"}
+                      <div
+                        className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group"
+                        onClick={() =>
+                          handleSingleClick(paramName, paramData.value)
+                        }
+                        title={
+                          connectionStatus === "connected"
+                            ? "Click to edit"
+                            : "Connect to ROS to edit"
+                        }
                       >
-                        Edit
-                      </button>
+                        {paramData.value?.toString() || "undefined"}
+                        {connectionStatus === "connected" && (
+                          <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
+                            ✏️
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-
-                <div className="mt-2">
-                  {editingParam === paramName ? (
-                    <input
-                      type="text"
-                      value={newValue}
-                      onChange={(e) => setNewValue(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <div className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700">
-                      {paramData.value?.toString() || "undefined"}
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     );
   };

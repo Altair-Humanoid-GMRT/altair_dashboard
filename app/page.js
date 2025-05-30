@@ -50,6 +50,158 @@ export default function Home() {
   // Create a ref to store the ROS instance
   const rosRef = useRef(null);
 
+  // Mock mode state
+  const [mockMode, setMockMode] = useState(false);
+
+  // Mock data based on sample-param.yaml
+  const mockParameters = {
+    "quintic_walk.engine.freq": { value: 1.85, type: 3 },
+    "quintic_walk.engine.double_support_ratio": { value: 0.045, type: 3 },
+    "quintic_walk.engine.first_step_swing_factor": { value: 0.7, type: 3 },
+    "quintic_walk.engine.first_step_trunk_phase": { value: -0.25, type: 3 },
+    "quintic_walk.engine.foot_apex_phase": { value: 0.5, type: 3 },
+    "quintic_walk.engine.foot_apex_pitch": { value: 0.0, type: 3 },
+    "quintic_walk.engine.foot_distance": { value: 0.18, type: 3 },
+    "quintic_walk.engine.foot_overshoot_phase": { value: 0.85, type: 3 },
+    "quintic_walk.engine.foot_overshoot_ratio": { value: 0.05, type: 3 },
+    "quintic_walk.engine.foot_put_down_phase": { value: 1.0, type: 3 },
+    "quintic_walk.engine.foot_put_down_z_offset": { value: 0.0, type: 3 },
+    "quintic_walk.engine.foot_rise": { value: 0.04, type: 3 },
+    "quintic_walk.engine.foot_z_pause": { value: 0.0, type: 3 },
+    "quintic_walk.engine.kick_length": { value: 0.12, type: 3 },
+    "quintic_walk.engine.kick_phase": { value: 0.28, type: 3 },
+    "quintic_walk.engine.kick_put_down_phase": { value: 0.8, type: 3 },
+    "quintic_walk.engine.kick_rise_factor": { value: 1.5, type: 3 },
+    "quintic_walk.engine.kick_vel": { value: 0.2, type: 3 },
+    "quintic_walk.engine.trunk_height": { value: 0.2, type: 3 },
+    "quintic_walk.engine.trunk_pause": { value: 0.3, type: 3 },
+    "quintic_walk.engine.trunk_phase": { value: 0.6, type: 3 },
+    "quintic_walk.engine.trunk_pitch": { value: 0.2, type: 3 },
+    "quintic_walk.engine.trunk_pitch_p_coef_forward": { value: 0.0, type: 3 },
+    "quintic_walk.engine.trunk_pitch_p_coef_turn": { value: 0.0, type: 3 },
+    "quintic_walk.engine.trunk_swing": { value: 0.062, type: 3 },
+    "quintic_walk.engine.trunk_x_offset": { value: -0.004, type: 3 },
+    "quintic_walk.engine.trunk_x_offset_p_coef_forward": {
+      value: 0.5,
+      type: 3,
+    },
+    "quintic_walk.engine.trunk_x_offset_p_coef_turn": { value: 0.0, type: 3 },
+    "quintic_walk.engine.trunk_y_offset": { value: 0.003, type: 3 },
+    "quintic_walk.engine.trunk_z_movement": { value: 0.0, type: 3 },
+    "quintic_walk.node.debug_active": { value: true, type: 1 },
+    "quintic_walk.node.engine_freq": { value: 125.0, type: 3 },
+    "quintic_walk.node.ik.reset": { value: true, type: 1 },
+    "quintic_walk.node.ik.timeout": { value: 0.01, type: 3 },
+    "quintic_walk.node.imu_y_acc_tau": { value: 0.2, type: 3 },
+    "quintic_walk.node.max_step_angular": { value: 1.0, type: 3 },
+    "quintic_walk.node.max_step_x": { value: 1.0, type: 3 },
+    "quintic_walk.node.max_step_xy": { value: 1.0, type: 3 },
+    "quintic_walk.node.max_step_y": { value: 1.0, type: 3 },
+    "quintic_walk.node.max_step_z": { value: 1.0, type: 3 },
+    "quintic_walk.node.phase_reset.effort.active": { value: false, type: 1 },
+    "quintic_walk.node.phase_reset.effort.joint_min_effort": {
+      value: 2.0,
+      type: 3,
+    },
+    "quintic_walk.node.phase_reset.foot_pressure.active": {
+      value: false,
+      type: 1,
+    },
+    "quintic_walk.node.phase_reset.foot_pressure.ground_min_pressure": {
+      value: 1.5,
+      type: 3,
+    },
+    "quintic_walk.node.phase_reset.imu.active": { value: false, type: 1 },
+    "quintic_walk.node.phase_reset.imu.y_acceleration_threshold": {
+      value: 2.0,
+      type: 3,
+    },
+    "quintic_walk.node.phase_reset.min_phase": { value: 0.9, type: 3 },
+    "quintic_walk.node.stability_stop.imu.active": { value: false, type: 1 },
+    "quintic_walk.node.stability_stop.imu.pitch.threshold": {
+      value: 0.19,
+      type: 3,
+    },
+    "quintic_walk.node.stability_stop.imu.pitch.vel_threshold": {
+      value: 1.3,
+      type: 3,
+    },
+    "quintic_walk.node.stability_stop.imu.roll.threshold": {
+      value: 0.4,
+      type: 3,
+    },
+    "quintic_walk.node.stability_stop.imu.roll.vel_threshold": {
+      value: 5.7,
+      type: 3,
+    },
+    "quintic_walk.node.stability_stop.pause_duration": { value: 3.0, type: 3 },
+    "quintic_walk.node.tf.base_link_frame": { value: "body_link", type: 4 },
+    "quintic_walk.node.tf.l_sole_frame": { value: "l_ank_roll_link", type: 4 },
+    "quintic_walk.node.tf.odom_frame": { value: "odom", type: 4 },
+    "quintic_walk.node.tf.r_sole_frame": { value: "r_ank_roll_link", type: 4 },
+    "quintic_walk.node.trunk_pid.pitch.antiwindup": { value: false, type: 1 },
+    "quintic_walk.node.trunk_pid.pitch.d": { value: 0.004, type: 3 },
+    "quintic_walk.node.trunk_pid.pitch.i": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.pitch.i_clamp_max": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.pitch.i_clamp_min": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.pitch.p": { value: 0.0035, type: 3 },
+    "quintic_walk.node.trunk_pid.roll.antiwindup": { value: false, type: 1 },
+    "quintic_walk.node.trunk_pid.roll.d": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.roll.i": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.roll.i_clamp_max": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.roll.i_clamp_min": { value: 0.0, type: 3 },
+    "quintic_walk.node.trunk_pid.roll.p": { value: 0.0, type: 3 },
+    "quintic_walk.node.x_bias": { value: 0.0, type: 3 },
+    "quintic_walk.node.x_speed_multiplier": { value: 1.0, type: 3 },
+    "quintic_walk.node.y_bias": { value: 0.0, type: 3 },
+    "quintic_walk.node.y_speed_multiplier": { value: 1.0, type: 3 },
+    "quintic_walk.node.yaw_bias": { value: 0.0, type: 3 },
+    "quintic_walk.node.yaw_speed_multiplier": { value: 1.0, type: 3 },
+  };
+
+  const mockDescriptions = {
+    "quintic_walk.engine.freq": { description: "Walking frequency in Hz" },
+    "quintic_walk.engine.double_support_ratio": {
+      description: "Ratio of double support phase",
+    },
+    "quintic_walk.engine.foot_distance": {
+      description: "Distance between feet",
+    },
+    "quintic_walk.engine.foot_rise": {
+      description: "Height of foot during swing phase",
+    },
+    "quintic_walk.engine.trunk_height": {
+      description: "Height of the robot trunk",
+    },
+    "quintic_walk.node.debug_active": { description: "Enable debug mode" },
+    "quintic_walk.node.engine_freq": { description: "Engine update frequency" },
+    "quintic_walk.node.max_step_x": {
+      description: "Maximum step in X direction",
+    },
+    "quintic_walk.node.max_step_y": {
+      description: "Maximum step in Y direction",
+    },
+    // Add more descriptions as needed
+  };
+
+  const mockHistoryFiles = [
+    {
+      filename: "config_2024_01_15_14_30.yaml",
+      path: "/mock/history/config_2024_01_15_14_30.yaml",
+      modified: "2024-01-15 14:30:25",
+    },
+    {
+      filename: "config_2024_01_15_10_15.yaml",
+      path: "/mock/history/config_2024_01_15_10_15.yaml",
+      modified: "2024-01-15 10:15:12",
+    },
+    {
+      filename: "config_2024_01_14_16_45.yaml",
+      path: "/mock/history/config_2024_01_14_16_45.yaml",
+      modified: "2024-01-14 16:45:08",
+    },
+  ];
+
   // Load selected parameters from localStorage
   useEffect(() => {
     try {
@@ -389,6 +541,11 @@ export default function Home() {
   };
 
   const saveParameters = () => {
+    if (mockMode) {
+      mockSaveParameters();
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setModalType("error");
       setModalMessage("Cannot save parameters: ROS connection not established");
@@ -458,30 +615,183 @@ export default function Home() {
     }, 300);
   };
 
+  // State for logs
+  const [logs, setLogs] = useState([]);
+
+  // Function to add log entry
+  const addLog = (message, type = "info", details = null) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const newLog = {
+      id: Date.now() + Math.random(),
+      timestamp,
+      message,
+      type, // 'info', 'success', 'error', 'warning', 'websocket'
+      details,
+    };
+    setLogs((prev) => [newLog, ...prev].slice(0, 100)); // Keep only last 100 logs
+  };
+
+  // Function to clear logs
+  const clearLogs = () => {
+    setLogs([]);
+  };
+
   // Function to handle editing a parameter
   const handleEdit = (paramName, currentValue) => {
     setEditingParam(paramName);
     setNewValue(currentValue?.toString() || "");
+    addLog(`Started editing parameter: ${paramName}`, "info");
   };
 
   // Function to save the edited parameter
   const handleSave = () => {
     if (editingParam && newValue !== "") {
-      updateParameter(editingParam, newValue);
+      addLog(`Saving parameter: ${editingParam} = ${newValue}`, "info");
+      if (mockMode) {
+        mockUpdateParameter(editingParam, newValue);
+      } else {
+        updateParameter(editingParam, newValue);
+      }
       setEditingParam(null);
       setNewValue("");
     }
   };
 
+  // State for local editing in command parameters
+  const [localEditingCmdParam, setLocalEditingCmdParam] = useState(null);
+  const [localCmdValue, setLocalCmdValue] = useState("");
+  const cmdInputRef = useRef(null);
+
+  // Focus input when editing command parameter starts
+  useEffect(() => {
+    if (localEditingCmdParam && cmdInputRef.current) {
+      cmdInputRef.current.focus();
+      cmdInputRef.current.select();
+    }
+  }, [localEditingCmdParam]);
+
+  // Handle single-click to edit command parameter
+  const handleCmdSingleClick = (paramName, currentValue) => {
+    setLocalEditingCmdParam(paramName);
+    setLocalCmdValue(currentValue?.toString() || "");
+    addLog(`Started editing command parameter: ${paramName}`, "info");
+  };
+
+  // Handle key press in command parameter input
+  const handleCmdKeyPress = (e, paramName) => {
+    if (e.key === "Enter") {
+      handleCmdSaveLocal(paramName);
+    } else if (e.key === "Escape") {
+      handleCmdCancelEdit();
+    }
+  };
+
+  // Handle save command parameter
+  const handleCmdSaveLocal = (paramName) => {
+    if (localCmdValue !== "") {
+      const newValue = parseFloat(localCmdValue);
+      setCmdParams((prevCmdParams) => ({
+        ...prevCmdParams,
+        [paramName]: newValue,
+      }));
+      addLog(
+        `Updated command parameter: ${paramName} = ${newValue}`,
+        "success"
+      );
+    }
+    setLocalEditingCmdParam(null);
+    setLocalCmdValue("");
+  };
+
+  // Handle cancel edit command parameter
+  const handleCmdCancelEdit = () => {
+    addLog(`Cancelled editing command parameter`, "warning");
+    setLocalEditingCmdParam(null);
+    setLocalCmdValue("");
+  };
+
+  // Handle input blur for command parameters
+  const handleCmdBlur = (paramName) => {
+    handleCmdSaveLocal(paramName);
+  };
+
+  // Function to handle parameter selection changes
+  const handleParamSelectionChange = (paramName, isSelected) => {
+    setSelectedParams((prev) => {
+      const updated = {
+        ...prev,
+        [paramName]: isSelected,
+      };
+      // Save to localStorage
+      localStorage.setItem("selected_parameters", JSON.stringify(updated));
+      return updated;
+    });
+    addLog(
+      `Parameter ${paramName} ${isSelected ? "selected" : "deselected"}`,
+      "info"
+    );
+  };
+
+  // Function to handle select all parameters
+  const handleSelectAllParams = (selectAll) => {
+    const updated = {};
+    Object.keys(parameters).forEach((param) => {
+      updated[param] = selectAll;
+    });
+    setSelectedParams(updated);
+    localStorage.setItem("selected_parameters", JSON.stringify(updated));
+    addLog(
+      `${selectAll ? "Selected" : "Deselected"} all parameters (${
+        Object.keys(parameters).length
+      } total)`,
+      "info"
+    );
+  };
+
+  // Function to apply settings from ConnectionManager
+  const applySettings = (newUri, newNamespace) => {
+    setConnectionUri(newUri);
+    setRobotNamespace(newNamespace);
+    setShowSettingsModal(false);
+
+    // Save to localStorage
+    localStorage.setItem("ros_connection_uri", newUri);
+    localStorage.setItem("ros_robot_namespace", newNamespace);
+
+    // Reinitialize connection with new settings
+    setRetryCount(0);
+    initRosConnection();
+
+    addLog(
+      `Settings updated: URI=${newUri}, Namespace=${newNamespace}`,
+      "info"
+    );
+
+    setModalType("success");
+    setModalMessage("Connection settings updated successfully");
+    setShowModal(true);
+  };
+
   const handlePlayRobot = (x, y, z) => {
+    addLog(`Robot command: Play (x:${x}, y:${y}, z:${z})`, "info");
+
+    if (mockMode) {
+      mockHandlePlayRobot(x, y, z);
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
+      const errorMsg = "Cannot control robot: ROS connection not established";
+      addLog(errorMsg, "error");
       setModalType("error");
-      setModalMessage("Cannot control robot: ROS connection not established");
+      setModalMessage(errorMsg);
       setShowModal(true);
       return;
     }
 
     console.log("Sending cmd_vel", { x, y, z });
+    addLog(`Publishing to /cmd_vel topic`, "websocket");
+
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/cmd_vel",
@@ -502,15 +812,30 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
+    addLog(`Published twist message to /cmd_vel`, "success", {
+      linear: { x, y, z: 0.0 },
+      angular: { x: 0.0, y: 0.0, z },
+    });
   };
 
   const handleStopRobot = () => {
+    addLog(`Robot command: Stop`, "info");
+
+    if (mockMode) {
+      mockHandleStopRobot();
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
+      const errorMsg = "Cannot control robot: ROS connection not established";
+      addLog(errorMsg, "error");
       setModalType("error");
-      setModalMessage("Cannot control robot: ROS connection not established");
+      setModalMessage(errorMsg);
       setShowModal(true);
       return;
     }
+
+    addLog(`Publishing stop command to /cmd_vel`, "websocket");
 
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
@@ -532,17 +857,32 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
+    addLog(`Published stop message to /cmd_vel`, "success", {
+      linear: { x: 0.0, y: 0.0, z: 0.0 },
+      angular: { x: -1.0, y: 0.0, z: 0.0 },
+    });
   };
 
   const handleRobotKick = () => {
+    addLog(`Robot command: Kick`, "info");
+
+    if (mockMode) {
+      mockHandleRobotKick();
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
+      const errorMsg = "Cannot control robot: ROS connection not established";
+      addLog(errorMsg, "error");
       setModalType("error");
-      setModalMessage("Cannot control robot: ROS connection not established");
+      setModalMessage(errorMsg);
       setShowModal(true);
       return;
     }
 
     handlePlayRobot(0, 0, 0);
+
+    addLog(`Publishing kick command to /kick topic`, "websocket");
 
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
@@ -555,50 +895,121 @@ export default function Home() {
     });
 
     cmdVel.publish(kick);
+    addLog(`Published kick message to /kick`, "success", { data: true });
 
     handleStopRobot();
   };
 
-  const handleCmdParamsSave = () => {
-    if (editingParam !== null) {
-      setCmdParams((prevCmdParams) => ({
-        ...prevCmdParams,
-        [editingParam]: parseFloat(newValue),
+  // Mock ROS functions
+  const createMockRos = () => {
+    return {
+      on: (event, callback) => {
+        if (event === "connection") {
+          setTimeout(() => callback(), 100);
+        }
+      },
+      removeAllListeners: () => {},
+      close: () => {},
+    };
+  };
+
+  const mockUpdateParameter = (paramName, value) => {
+    console.log(`Mock: Updating parameter ${paramName} to ${value}`);
+
+    // Simulate parameter update with delay
+    setTimeout(() => {
+      setParameters((prev) => ({
+        ...prev,
+        [paramName]: {
+          ...prev[paramName],
+          value: convertValueByType(value, prev[paramName]?.type),
+        },
       }));
 
-      setEditingParam(null);
-      setNewValue("");
+      setModalType("success");
+      setModalMessage(
+        `Parameter ${paramName} updated successfully (Mock Mode)`
+      );
+      setShowModal(true);
+    }, 500);
+  };
+
+  const convertValueByType = (value, type) => {
+    switch (type) {
+      case 1: // PARAMETER_BOOL
+        return value === "true" || value === true;
+      case 2: // PARAMETER_INTEGER
+        return parseInt(value, 10);
+      case 3: // PARAMETER_DOUBLE
+        return parseFloat(value);
+      case 4: // PARAMETER_STRING
+        return value;
+      case 9: // PARAMETER_STRING_ARRAY
+        return Array.isArray(value) ? value : value.split(",");
+      default:
+        return value;
     }
   };
 
-  const handleParamSelectionChange = (paramName, isSelected) => {
-    setSelectedParams((prev) => {
-      const updated = { ...prev, [paramName]: isSelected };
-      localStorage.setItem("selected_parameters", JSON.stringify(updated));
-      return updated;
-    });
+  const mockSaveParameters = () => {
+    console.log("Mock: Saving parameters");
+    setIsLoadingSave(true);
+
+    setTimeout(() => {
+      setIsLoadingSave(false);
+      setModalType("success");
+      setModalMessage("Parameters saved successfully (Mock Mode)");
+      setShowModal(true);
+    }, 1000);
   };
 
-  const handleSelectAllParams = (isSelected) => {
-    const updated = {};
-    Object.keys(parameters).forEach((param) => {
-      updated[param] = isSelected;
-    });
-    setSelectedParams(updated);
-    localStorage.setItem("selected_parameters", JSON.stringify(updated));
+  const mockHandlePlayRobot = (x, y, z) => {
+    console.log(`Mock: Play robot with x:${x}, y:${y}, z:${z}`);
+    setModalType("success");
+    setModalMessage(`Robot command sent: x:${x}, y:${y}, z:${z} (Mock Mode)`);
+    setShowModal(true);
   };
 
-  const applySettings = (newConnectionUri, newRobotNamespace) => {
-    // Only reconnect if settings actually changed
-    if (
-      newConnectionUri !== connectionUri ||
-      newRobotNamespace !== robotNamespace
-    ) {
-      setConnectionUri(newConnectionUri);
-      setRobotNamespace(newRobotNamespace);
-      // Connection will be reinitialized by useEffect
+  const mockHandleStopRobot = () => {
+    console.log("Mock: Stop robot");
+    setModalType("success");
+    setModalMessage("Robot stopped (Mock Mode)");
+    setShowModal(true);
+  };
+
+  const mockHandleRobotKick = () => {
+    console.log("Mock: Robot kick");
+    setModalType("success");
+    setModalMessage("Robot kick executed (Mock Mode)");
+    setShowModal(true);
+  };
+
+  // Toggle mock mode
+  const toggleMockMode = () => {
+    const newMockMode = !mockMode;
+    setMockMode(newMockMode);
+
+    if (newMockMode) {
+      // Enable mock mode
+      setConnectionStatus("connected");
+      setParameters(mockParameters);
+      setParamDescriptions(mockDescriptions);
+      rosRef.current = createMockRos();
+
+      setModalType("success");
+      setModalMessage("Mock mode enabled - no ROS connection required");
+      setShowModal(true);
+    } else {
+      // Disable mock mode - reconnect to real ROS
+      setConnectionStatus("disconnected");
+      setParameters({});
+      setParamDescriptions({});
+      initRosConnection();
+
+      setModalType("success");
+      setModalMessage("Mock mode disabled - attempting real ROS connection");
+      setShowModal(true);
     }
-    setShowSettingsModal(false);
   };
 
   return (
@@ -624,6 +1035,32 @@ export default function Home() {
           </div>
         </div>
         <div className="flex gap-2">
+          {/* Mock Mode Toggle */}
+          <button
+            onClick={toggleMockMode}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              mockMode
+                ? "bg-orange-600 text-white hover:bg-orange-700"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              {mockMode ? "Mock Mode ON" : "Mock Mode OFF"}
+            </div>
+          </button>
+
           <button
             onClick={() => setShowSettingsModal(true)}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -666,85 +1103,183 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Command Parameters */}
+      {/* Command Parameters with Logs */}
       <div className="mb-8 bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-700">
-          Command Parameters
+          Command Parameters & Logs
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Parameter Name
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Value
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Actions
-                </th>
-                <th className="text-left p-3 text-gray-600 font-semibold">
-                  Type
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(cmdParams).map(
-                ([paramName, paramValue], index) => (
-                  <tr
-                    key={paramName}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
-                  >
-                    <td className="p-3 border-t border-gray-200">
-                      {paramName}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      {editingParam === paramName ? (
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={newValue}
-                          onChange={(e) => setNewValue(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      ) : (
-                        <span className="font-mono">
-                          {paramValue?.toString() || "0.0"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      {editingParam === paramName ? (
-                        <button
-                          onClick={handleCmdParamsSave}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit(paramName, paramValue)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-                          disabled={connectionStatus !== "connected"}
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </td>
-                    <td className="p-3 border-t border-gray-200">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                        double
-                      </span>
-                    </td>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Command Parameters Table */}
+          <div>
+            <h3 className="text-lg font-medium mb-3 text-gray-600">
+              Parameters
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
+                      Parameter Name
+                    </th>
+                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
+                      Value
+                    </th>
+                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
+                      Type
+                    </th>
                   </tr>
-                )
+                </thead>
+                <tbody>
+                  {Object.entries(cmdParams).map(
+                    ([paramName, paramValue], index) => {
+                      const isEditing = localEditingCmdParam === paramName;
+                      return (
+                        <tr
+                          key={paramName}
+                          className={`${
+                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } hover:bg-blue-50 group`}
+                        >
+                          <td className="p-3 border-t border-gray-200 text-sm">
+                            {paramName}
+                          </td>
+                          <td className="p-3 border-t border-gray-200">
+                            {isEditing ? (
+                              <input
+                                ref={cmdInputRef}
+                                type="number"
+                                step="0.1"
+                                value={localCmdValue}
+                                onChange={(e) =>
+                                  setLocalCmdValue(e.target.value)
+                                }
+                                onKeyDown={(e) =>
+                                  handleCmdKeyPress(e, paramName)
+                                }
+                                onBlur={() => handleCmdBlur(paramName)}
+                                className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder="Press Enter to save, Escape to cancel"
+                              />
+                            ) : (
+                              <div
+                                className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group text-sm"
+                                onClick={() =>
+                                  handleCmdSingleClick(paramName, paramValue)
+                                }
+                                title="Click to edit"
+                              >
+                                {paramValue?.toString() || "0.0"}
+                                <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
+                                  ✏️
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-3 border-t border-gray-200">
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                              double
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 text-xs text-gray-500">
+              💡 Click on any value to edit it. Press Enter to save or Escape to
+              cancel.
+            </div>
+          </div>
+
+          {/* Logs Panel */}
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium text-gray-600">
+                Activity Logs
+              </h3>
+              <button
+                onClick={clearLogs}
+                className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 transition-colors"
+              >
+                Clear Logs
+              </button>
+            </div>
+
+            <div className="bg-black rounded-lg p-3 h-64 overflow-y-auto text-xs font-mono">
+              {logs.length === 0 ? (
+                <div className="text-gray-400 text-center py-8">
+                  No logs yet. Perform actions to see logs here.
+                </div>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="mb-2 leading-relaxed">
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-400 shrink-0">
+                        [{log.timestamp}]
+                      </span>
+                      <span
+                        className={`${
+                          log.type === "info"
+                            ? "text-blue-400"
+                            : log.type === "success"
+                            ? "text-green-400"
+                            : log.type === "error"
+                            ? "text-red-400"
+                            : log.type === "warning"
+                            ? "text-yellow-400"
+                            : log.type === "websocket"
+                            ? "text-purple-400"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        [{log.type.toUpperCase()}]
+                      </span>
+                      <span className="text-gray-200 break-words">
+                        {log.message}
+                      </span>
+                    </div>
+                    {log.details && (
+                      <div className="mt-1 ml-4 text-gray-400">
+                        <pre className="text-xs whitespace-pre-wrap">
+                          {JSON.stringify(log.details, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ))
               )}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Log Legend */}
+            <div className="mt-3 text-xs">
+              <div className="text-gray-600 font-medium mb-1">Log Types:</div>
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span className="text-gray-600">INFO</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="text-gray-600">SUCCESS</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                  <span className="text-gray-600">ERROR</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                  <span className="text-gray-600">WARNING</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <span className="text-gray-600">WEBSOCKET</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -755,7 +1290,7 @@ export default function Home() {
             onClick={() =>
               handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)
             }
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg"
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50"
             disabled={connectionStatus !== "connected"}
             title="Play"
           >
@@ -776,7 +1311,7 @@ export default function Home() {
 
           <button
             onClick={handleStopRobot}
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 shadow-lg"
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50"
             disabled={connectionStatus !== "connected"}
             title="Stop"
           >
@@ -797,7 +1332,7 @@ export default function Home() {
 
           <button
             onClick={handleRobotKick}
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50 shadow-lg"
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50"
             disabled={connectionStatus !== "connected"}
             title="Kick"
           >
@@ -823,6 +1358,7 @@ export default function Home() {
         rosRef={rosRef}
         connectionStatus={connectionStatus}
         robotNamespace={robotNamespace}
+        mockMode={mockMode}
         onRestore={() => {
           // Function to call after a parameter file is restored
           setModalType("success");

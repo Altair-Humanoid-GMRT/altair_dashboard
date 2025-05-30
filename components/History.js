@@ -7,6 +7,7 @@ export default function History({
   robotNamespace,
   onRestore,
   onRefresh,
+  mockMode = false, // Add mockMode prop
 }) {
   const [historyFiles, setHistoryFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -19,14 +20,134 @@ export default function History({
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedFileToDelete, setSelectedFileToDelete] = useState(null);
 
+  // Mock history files and data
+  const mockHistoryFiles = [
+    {
+      filename: "config_2024_01_15_14_30.yaml",
+      path: "/mock/history/config_2024_01_15_14_30.yaml",
+      modified: "2024-01-15 14:30:25",
+    },
+    {
+      filename: "config_2024_01_15_10_15.yaml",
+      path: "/mock/history/config_2024_01_15_10_15.yaml",
+      modified: "2024-01-15 10:15:12",
+    },
+    {
+      filename: "config_2024_01_14_16_45.yaml",
+      path: "/mock/history/config_2024_01_14_16_45.yaml",
+      modified: "2024-01-14 16:45:08",
+    },
+  ];
+
+  const mockParameterData = {
+    "/mock/history/config_2024_01_15_14_30.yaml": {
+      quintic_walk: {
+        engine: {
+          freq: 1.9,
+          foot_distance: 0.19,
+          trunk_height: 0.21,
+        },
+        node: {
+          debug_active: false,
+          engine_freq: 130.0,
+        },
+      },
+    },
+    "/mock/history/config_2024_01_15_10_15.yaml": {
+      quintic_walk: {
+        engine: {
+          freq: 1.75,
+          foot_distance: 0.17,
+          trunk_height: 0.19,
+        },
+        node: {
+          debug_active: true,
+          engine_freq: 120.0,
+        },
+      },
+    },
+    "/mock/history/config_2024_01_14_16_45.yaml": {
+      quintic_walk: {
+        engine: {
+          freq: 1.85,
+          foot_distance: 0.18,
+          trunk_height: 0.2,
+        },
+        node: {
+          debug_active: true,
+          engine_freq: 125.0,
+        },
+      },
+    },
+  };
+
+  // Mock functions
+  const mockFetchHistoryFiles = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setHistoryFiles(mockHistoryFiles);
+      setLoading(false);
+    }, 500);
+  };
+
+  const mockPreviewFile = (file) => {
+    setLoading(true);
+    setSelectedFile(file);
+    setTimeout(() => {
+      setPreviewParams(mockParameterData[file.path] || {});
+      setLoading(false);
+    }, 300);
+  };
+
+  const mockSelectForComparison = (file) => {
+    setLoading(true);
+    setCompareFile(file);
+    setTimeout(() => {
+      setCompareParams(mockParameterData[file.path] || {});
+      setLoading(false);
+    }, 300);
+  };
+
+  const mockLoadParameterFile = (filePath) => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      onRestore();
+      onRefresh();
+    }, 800);
+  };
+
+  const mockDeleteFile = (file) => {
+    setLoading(true);
+    setTimeout(() => {
+      setHistoryFiles((prev) => prev.filter((f) => f.path !== file.path));
+      if (selectedFile?.path === file.path) {
+        setSelectedFile(null);
+        setPreviewParams(null);
+      }
+      if (compareFile?.path === file.path) {
+        setCompareFile(null);
+        setCompareParams(null);
+      }
+      setLoading(false);
+    }, 500);
+  };
+
   // Fetch history files on component mount and when connection status changes
   useEffect(() => {
-    if (connectionStatus === "connected") {
+    if (mockMode) {
+      mockFetchHistoryFiles();
+    } else if (connectionStatus === "connected") {
       fetchHistoryFiles();
     }
-  }, [connectionStatus, robotNamespace]);
+  }, [connectionStatus, robotNamespace, mockMode]);
 
   const fetchHistoryFiles = async () => {
+    if (mockMode) {
+      mockFetchHistoryFiles();
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
@@ -67,6 +188,11 @@ export default function History({
   };
 
   const loadParameterFile = (filePath) => {
+    if (mockMode) {
+      mockLoadParameterFile(filePath);
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
@@ -115,6 +241,11 @@ export default function History({
   };
 
   const previewFile = (file) => {
+    if (mockMode) {
+      mockPreviewFile(file);
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
@@ -168,6 +299,11 @@ export default function History({
   };
 
   const deleteFile = (file) => {
+    if (mockMode) {
+      mockDeleteFile(file);
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
@@ -230,6 +366,11 @@ export default function History({
   };
 
   const selectForComparison = (file) => {
+    if (mockMode) {
+      mockSelectForComparison(file);
+      return;
+    }
+
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
