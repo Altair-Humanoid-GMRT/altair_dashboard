@@ -400,9 +400,7 @@ const HierarchicalParameters = ({
   return (
     <div className="mb-8 glass-card rounded-2xl p-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-contrast-high">
-          Parameters
-        </h2>
+        <h2 className="text-2xl font-bold text-contrast-high">Parameters</h2>
         <div className="flex space-x-3">
           <div className="text-sm text-contrast-medium glass-card px-3 py-2 rounded-lg">
             {selectionStats.selected} of {selectionStats.total} parameters

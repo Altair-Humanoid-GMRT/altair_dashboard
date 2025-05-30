@@ -753,8 +753,16 @@ export default function History({
       {error && (
         <div className="bg-red-900/60 border border-red-500/60 text-red-100 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <svg className="h-5 w-5 text-red-300" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            <svg
+              className="h-5 w-5 text-red-300"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             {error}
           </div>
@@ -771,7 +779,9 @@ export default function History({
       ) : historyFiles.length === 0 ? (
         <div className="text-center py-16 text-muted">
           <div className="text-6xl mb-4">📂</div>
-          <div className="text-xl mb-2 text-contrast-medium">No history files found</div>
+          <div className="text-xl mb-2 text-contrast-medium">
+            No history files found
+          </div>
           <div>Parameter configurations will appear here when saved</div>
         </div>
       ) : (
@@ -800,15 +810,27 @@ export default function History({
                 onClick={() => setDeleteModal(false)}
                 className="text-muted hover:text-contrast-medium transition-colors p-1"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="mb-8">
               <p className="text-contrast-medium leading-relaxed">
                 Are you sure you want to delete &quot;
-                <span className="font-semibold text-contrast-high">{selectedFileToDelete.filename}</span>
+                <span className="font-semibold text-contrast-high">
+                  {selectedFileToDelete.filename}
+                </span>
                 &quot;? This action cannot be undone.
               </p>
             </div>
