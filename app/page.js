@@ -447,6 +447,19 @@ export default function Home() {
         }
       );
     }, 300);
+
+    // After successful save, execute start and stop commands
+    if (response.success) {
+      setTimeout(() => {
+        // Execute play with current parameters
+        handlePlayRobot(0, 0, 0);
+
+        // Stop after a brief period
+        setTimeout(() => {
+          handleStopRobot();
+        }, 500); // 500ms duration for the command to execute
+      }, 300); // Wait for parameters to be applied
+    }
   };
 
   // Function to handle editing a parameter
@@ -736,74 +749,76 @@ export default function Home() {
       </div>
 
       {/* Robot Controls */}
-        <div className="fixed bottom-8 right-8 z-50">
-          <div className="flex flex-col gap-2">
-            <button
-          onClick={() => handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)}
-          className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg"
-          disabled={connectionStatus !== "connected"}
-          title="Play"
-            >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+      <div className="fixed bottom-8 right-8 z-50">
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() =>
+              handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)
+            }
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50 shadow-lg"
+            disabled={connectionStatus !== "connected"}
+            title="Play"
           >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="font-medium">Play</span>
-            </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium">Play</span>
+          </button>
 
-            <button
-          onClick={handleStopRobot}
-          className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 shadow-lg"
-          disabled={connectionStatus !== "connected"}
-          title="Stop"
-            >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+          <button
+            onClick={handleStopRobot}
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 shadow-lg"
+            disabled={connectionStatus !== "connected"}
+            title="Stop"
           >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="font-medium">Stop</span>
-            </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium">Stop</span>
+          </button>
 
-            <button
-          onClick={handleRobotKick}
-          className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50 shadow-lg"
-          disabled={connectionStatus !== "connected"}
-          title="Kick"
-            >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+          <button
+            onClick={handleRobotKick}
+            className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50 shadow-lg"
+            disabled={connectionStatus !== "connected"}
+            title="Kick"
           >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span className="font-medium">Kick</span>
-            </button>
-          </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium">Kick</span>
+          </button>
         </div>
+      </div>
 
-        {/* Add the History Section */}
+      {/* Add the History Section */}
       <History
         rosRef={rosRef}
         connectionStatus={connectionStatus}
