@@ -519,7 +519,7 @@ export default function Home() {
             setTimeout(() => {
               handleStopRobot();
             }, 100); // 500ms duration for the command to execute
-          }, 300); // Wait for parameters to be applied
+          }, 1000); // Wait for parameters to be applied
         } else {
           console.error(response.results[0]);
           console.error(`Failed to update parameter ${paramName}.`);
@@ -1033,19 +1033,6 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg
-                    className="w-7 h-7 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Altair Dashboard
                 </h1>

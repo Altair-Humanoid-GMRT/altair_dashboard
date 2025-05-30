@@ -398,18 +398,18 @@ const HierarchicalParameters = ({
   };
 
   return (
-    <div className="mb-8 glass-card rounded-2xl p-8 border border-white/20">
+    <div className="mb-8 glass-card rounded-2xl p-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+        <h2 className="text-2xl font-bold text-contrast-high">
           Parameters
         </h2>
         <div className="flex space-x-3">
-          <div className="text-sm text-white/60 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg border border-white/20">
+          <div className="text-sm text-contrast-medium glass-card px-3 py-2 rounded-lg">
             {selectionStats.selected} of {selectionStats.total} parameters
             selected
           </div>
           <button
-            className="glass-button bg-gray-500/20 hover:bg-gray-500/30 text-white px-4 py-2 rounded-lg text-sm flex items-center border border-gray-400/30 transition-all duration-200"
+            className="glass-button bg-slate-700/60 border-slate-500/50 text-slate-100 px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 hover:bg-slate-600/70"
             onClick={() => setExpandedSections({})}
           >
             <svg
@@ -429,7 +429,7 @@ const HierarchicalParameters = ({
             Collapse All
           </button>
           <button
-            className="glass-button bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-4 py-2 rounded-lg text-sm flex items-center border border-blue-400/30 transition-all duration-200"
+            className="glass-button bg-blue-900/60 border-blue-400/50 text-blue-100 px-4 py-2 rounded-lg text-sm flex items-center transition-all duration-200 hover:bg-blue-800/70"
             onClick={() => {
               const allPaths = {};
               const collectPaths = (obj, path = "") => {
@@ -468,18 +468,18 @@ const HierarchicalParameters = ({
         </div>
       </div>
 
-      <div className="border-b border-white/20 mb-6"></div>
+      <div className="border-b border-contrast-divider mb-6"></div>
 
       {/* Parameter selection controls */}
       <div className="mb-6 flex items-center space-x-4">
-        <label className="flex items-center glass-card rounded-lg p-3 border border-white/20 hover:bg-white/10 transition-all duration-200 cursor-pointer">
+        <label className="flex items-center glass-card rounded-lg p-3 hover:bg-slate-800/40 transition-all duration-200 cursor-pointer">
           <input
             type="checkbox"
-            className="h-5 w-5 text-blue-400 focus:ring-blue-400 border-white/30 rounded bg-white/10 backdrop-blur-sm"
+            className="h-5 w-5 text-blue-400 focus:ring-blue-400/50 border-slate-600 rounded bg-slate-700/50"
             checked={selectionStats.allSelected}
             onChange={(e) => onSelectAll(e.target.checked)}
           />
-          <span className="ml-3 text-sm font-medium text-white/90">
+          <span className="ml-3 text-sm font-medium text-contrast-medium">
             {selectionStats.allSelected
               ? "Deselect All"
               : selectionStats.someSelected
@@ -497,9 +497,9 @@ const HierarchicalParameters = ({
             placeholder="Search parameters..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-4 pl-12 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
+            className="glass-input w-full p-4 pl-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50"
           />
-          <div className="absolute left-4 top-4 text-white/50">
+          <div className="absolute left-4 top-4 text-muted">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6"

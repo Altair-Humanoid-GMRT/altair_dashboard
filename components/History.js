@@ -472,43 +472,41 @@ export default function History({
 
   const renderFileList = () => {
     return (
-      <div className="overflow-hidden rounded-xl border border-white/20">
+      <div className="glass-table overflow-hidden rounded-xl">
         <table className="w-full">
           <thead>
-            <tr className="bg-white/10 backdrop-blur-sm">
-              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+            <tr className="glass-table-header">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
                 Filename
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
                 Modified
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/10">
+          <tbody className="divide-y divide-slate-700/30">
             {historyFiles.map((file, index) => (
               <tr
                 key={index}
-                className={`${
+                className={`glass-table-row ${
                   selectedFile?.path === file.path
-                    ? "bg-blue-500/20 border-blue-400/30"
-                    : index % 2 === 0
-                    ? "bg-white/5"
-                    : "bg-white/10"
-                } hover:bg-white/20 transition-all duration-200`}
+                    ? "!bg-blue-900/40 border-l-4 border-blue-400"
+                    : ""
+                }`}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white/90">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-contrast-medium">
                   {file.filename}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-contrast-low">
                   {file.modified}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
                     onClick={() => previewFile(file)}
-                    className="glass-button bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-3 py-1 rounded-lg transition-all duration-200 border border-blue-400/30"
+                    className="glass-button bg-blue-900/60 hover:bg-blue-800/70 text-blue-100 px-4 py-2 rounded-lg transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
                   >
                     Preview
                   </button>
@@ -517,14 +515,14 @@ export default function History({
                     selectedFile.path !== file.path && (
                       <button
                         onClick={() => selectForComparison(file)}
-                        className="glass-button bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 px-3 py-1 rounded-lg transition-all duration-200 border border-purple-400/30"
+                        className="glass-button bg-purple-900/60 hover:bg-purple-800/70 text-purple-100 px-4 py-2 rounded-lg transition-all duration-200 border border-purple-500/50 hover:border-purple-400/70"
                       >
                         Compare
                       </button>
                     )}
                   <button
                     onClick={() => loadParameterFile(file.path)}
-                    className="glass-button bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 px-3 py-1 rounded-lg transition-all duration-200 border border-emerald-400/30"
+                    className="glass-button bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-100 px-4 py-2 rounded-lg transition-all duration-200 border border-emerald-500/50 hover:border-emerald-400/70"
                   >
                     Restore
                   </button>
@@ -533,7 +531,7 @@ export default function History({
                       setSelectedFileToDelete(file);
                       setDeleteModal(true);
                     }}
-                    className="glass-button bg-red-500/20 hover:bg-red-500/30 text-red-200 px-3 py-1 rounded-lg transition-all duration-200 border border-red-400/30"
+                    className="glass-button bg-red-900/60 hover:bg-red-800/70 text-red-100 px-4 py-2 rounded-lg transition-all duration-200 border border-red-500/50 hover:border-red-400/70"
                   >
                     Delete
                   </button>
@@ -563,13 +561,13 @@ export default function History({
     });
 
     return (
-      <div className="mt-6 glass-card rounded-xl p-6 border border-white/20">
-        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+      <div className="mt-6 glass-card rounded-xl p-6">
+        <h3 className="text-xl font-semibold mb-4 text-contrast-high">
           Parameter Comparison
         </h3>
 
-        <div className="grid grid-cols-3 gap-4 mb-4 font-semibold bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20">
-          <div className="text-white/90">Parameter</div>
+        <div className="grid grid-cols-3 gap-4 mb-4 font-semibold glass-table-header p-4 rounded-lg">
+          <div className="text-contrast-medium">Parameter</div>
           <div className="text-blue-300">
             {selectedFile?.filename} (Selected)
           </div>
@@ -581,7 +579,7 @@ export default function History({
         <div className="overflow-auto max-h-[400px] custom-scrollbar">
           {Object.entries(groupedResults).map(([topLevel, params]) => (
             <div key={topLevel} className="mb-4">
-              <h4 className="font-bold text-white/90 mb-2 bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
+              <h4 className="font-bold text-contrast-medium mb-2 glass-table-header p-3 rounded-lg">
                 {topLevel}
               </h4>
 
@@ -596,43 +594,43 @@ export default function History({
                     key={index}
                     className={`grid grid-cols-3 gap-4 py-3 px-3 rounded-lg mb-2 transition-all duration-200 ${
                       isDifferent
-                        ? "bg-amber-500/10 border border-amber-400/30"
-                        : "bg-white/5 border border-white/10"
+                        ? "bg-amber-900/30 border border-amber-500/40"
+                        : "glass-table-row"
                     }`}
                   >
-                    <div className="font-mono text-sm break-all text-white/80">
+                    <div className="font-mono text-sm break-all text-contrast-medium">
                       {displayKey}
                     </div>
                     <div
                       className={`break-all ${
-                        isDifferent ? "text-blue-300" : "text-white/70"
+                        isDifferent ? "text-blue-200" : "text-contrast-low"
                       }`}
                     >
                       {param.value1 === undefined ? (
-                        <span className="text-gray-400">undefined</span>
+                        <span className="text-muted">undefined</span>
                       ) : typeof param.value1 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap bg-black/20 p-2 rounded border border-white/10">
+                        <pre className="text-xs whitespace-pre-wrap bg-slate-900/40 p-3 rounded border border-slate-600/30">
                           {JSON.stringify(param.value1, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20">
+                        <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40">
                           {String(param.value1)}
                         </span>
                       )}
                     </div>
                     <div
                       className={`break-all ${
-                        isDifferent ? "text-purple-300" : "text-white/70"
+                        isDifferent ? "text-purple-200" : "text-contrast-low"
                       }`}
                     >
                       {param.value2 === undefined ? (
-                        <span className="text-gray-400">undefined</span>
+                        <span className="text-muted">undefined</span>
                       ) : typeof param.value2 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap bg-black/20 p-2 rounded border border-white/10">
+                        <pre className="text-xs whitespace-pre-wrap bg-slate-900/40 p-3 rounded border border-slate-600/30">
                           {JSON.stringify(param.value2, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20">
+                        <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40">
                           {String(param.value2)}
                         </span>
                       )}
@@ -649,15 +647,15 @@ export default function History({
 
   const renderParameterValue = (value, level = 0) => {
     if (value === null || value === undefined) {
-      return <span className="text-white/40">null</span>;
+      return <span className="text-muted">null</span>;
     }
 
     if (typeof value === "object" && !Array.isArray(value)) {
       return (
-        <div className="pl-4 border-l border-white/20">
+        <div className="pl-4 border-l border-slate-600/40">
           {Object.entries(value).map(([k, v]) => (
             <div key={k} className="py-1">
-              <span className="font-medium text-white/80">{k}: </span>
+              <span className="font-medium text-contrast-medium">{k}: </span>
               {renderParameterValue(v, level + 1)}
             </div>
           ))}
@@ -667,7 +665,7 @@ export default function History({
 
     if (Array.isArray(value)) {
       return (
-        <div className="font-mono text-sm bg-white/10 p-2 rounded border border-white/20 text-white/80">
+        <div className="font-mono text-sm bg-slate-800/50 p-3 rounded border border-slate-600/40 text-contrast-medium">
           [
           {value.map((item, i) => (
             <span key={i} className="ml-2">
@@ -682,9 +680,8 @@ export default function History({
       );
     }
 
-    // For primitive values
     return (
-      <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20 text-white/80">
+      <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40 text-contrast-medium">
         {value.toString()}
       </span>
     );
@@ -693,19 +690,18 @@ export default function History({
   const renderParameterPreview = () => {
     if (!previewParams) return null;
 
-    // Display with hierarchy preserved
     return (
-      <div className="mt-6 glass-card rounded-xl p-6 border border-white/20">
-        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+      <div className="mt-6 glass-card rounded-xl p-6">
+        <h3 className="text-xl font-semibold mb-4 text-contrast-high">
           Parameter Preview
         </h3>
         <div className="overflow-auto max-h-[400px] custom-scrollbar">
           {Object.entries(previewParams).map(([key, value]) => (
             <div
               key={key}
-              className="py-3 border-b border-white/10 last:border-b-0"
+              className="py-3 border-b border-slate-700/30 last:border-b-0"
             >
-              <div className="font-medium text-white/90 mb-2">{key}</div>
+              <div className="font-medium text-contrast-medium mb-2">{key}</div>
               <div className="ml-4">{renderParameterValue(value)}</div>
             </div>
           ))}
@@ -715,19 +711,19 @@ export default function History({
   };
 
   return (
-    <div className="mb-8 glass-card rounded-2xl p-8 border border-white/20">
+    <div className="mb-8 glass-card rounded-2xl p-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold text-contrast-high">
           Parameter History
         </h2>
         <div className="flex space-x-3">
           <button
             onClick={toggleCompareMode}
-            className={`glass-button px-6 py-3 rounded-xl font-medium text-white transition-all duration-300 ${
+            className={`glass-button px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
               compareMode
-                ? "bg-gradient-to-r from-purple-500/30 to-purple-600/30 border-purple-400/40"
-                : "bg-gradient-to-r from-blue-500/30 to-blue-600/30 border-blue-400/40"
-            } hover:scale-105`}
+                ? "bg-purple-800/60 border-purple-400/60 text-purple-100 hover:bg-purple-700/70"
+                : "bg-blue-800/60 border-blue-400/60 text-blue-100 hover:bg-blue-700/70"
+            }`}
           >
             <div className="flex items-center gap-2">
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -738,7 +734,7 @@ export default function History({
           </button>
           <button
             onClick={fetchHistoryFiles}
-            className="glass-button bg-gradient-to-r from-gray-500/30 to-gray-600/30 border-gray-400/40 px-6 py-3 rounded-xl font-medium text-white hover:from-gray-400/40 hover:to-gray-500/40 transition-all duration-300 hover:scale-105"
+            className="glass-button bg-slate-700/60 border-slate-500/60 px-6 py-3 rounded-xl font-medium text-slate-100 hover:bg-slate-600/70 transition-all duration-300 hover:scale-105"
           >
             <div className="flex items-center gap-2">
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -755,18 +751,10 @@ export default function History({
       </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-400/30 text-red-200 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
+        <div className="bg-red-900/60 border border-red-500/60 text-red-100 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <svg
-              className="h-5 w-5 text-red-400"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
+            <svg className="h-5 w-5 text-red-300" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
             {error}
           </div>
@@ -776,14 +764,14 @@ export default function History({
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-blue-400/30 rounded-full"></div>
+            <div className="w-16 h-16 border-4 border-slate-600/30 rounded-full"></div>
             <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
           </div>
         </div>
       ) : historyFiles.length === 0 ? (
-        <div className="text-center py-16 text-white/60">
+        <div className="text-center py-16 text-muted">
           <div className="text-6xl mb-4">📂</div>
-          <div className="text-xl mb-2">No history files found</div>
+          <div className="text-xl mb-2 text-contrast-medium">No history files found</div>
           <div>Parameter configurations will appear here when saved</div>
         </div>
       ) : (
@@ -797,12 +785,12 @@ export default function History({
       )}
 
       {deleteModal && selectedFileToDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-red-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-500/20">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-900/40 border border-red-500/50">
                     ⚠️
                   </div>
                   Confirm Delete
@@ -810,41 +798,29 @@ export default function History({
               </h3>
               <button
                 onClick={() => setDeleteModal(false)}
-                className="text-white/60 hover:text-white transition-colors p-1"
+                className="text-muted hover:text-contrast-medium transition-colors p-1"
               >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="mb-8">
-              <p className="text-white/80 leading-relaxed">
+              <p className="text-contrast-medium leading-relaxed">
                 Are you sure you want to delete &quot;
-                <span className="font-semibold text-white">
-                  {selectedFileToDelete.filename}
-                </span>
+                <span className="font-semibold text-contrast-high">{selectedFileToDelete.filename}</span>
                 &quot;? This action cannot be undone.
               </p>
             </div>
             <div className="flex justify-end gap-3">
               <button
-                className="glass-button px-6 py-3 rounded-xl text-white font-medium bg-gray-500/20 border-gray-400/30 hover:bg-gray-500/30"
+                className="glass-button px-6 py-3 rounded-xl text-slate-100 font-medium bg-slate-700/60 border-slate-500/60 hover:bg-slate-600/70"
                 onClick={() => setDeleteModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="glass-button px-6 py-3 rounded-xl text-white font-medium bg-red-500/20 border-red-400/30 hover:bg-red-500/30"
+                className="glass-button px-6 py-3 rounded-xl text-red-100 font-medium bg-red-900/60 border-red-500/60 hover:bg-red-800/70"
                 onClick={() => {
                   confirmDelete(selectedFileToDelete);
                   setDeleteModal(false);
