@@ -1013,269 +1013,330 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">Altair Dashboard</h1>
-          <div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              connectionStatus === "connected"
-                ? "bg-green-100 text-green-800"
-                : connectionStatus === "error"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            {connectionStatus === "connected"
-              ? "Connected"
-              : connectionStatus === "error"
-              ? "Connection Error"
-              : "Disconnected"}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {/* Mock Mode Toggle */}
-          <button
-            onClick={toggleMockMode}
-            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
-              mockMode
-                ? "bg-orange-600 text-white hover:bg-orange-700"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              {mockMode ? "Mock Mode ON" : "Mock Mode OFF"}
-            </div>
-          </button>
+    <div className="min-h-screen p-6 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl floating"></div>
+        <div
+          className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl floating"
+          style={{ animationDelay: "3s" }}
+        ></div>
+        <div
+          className="absolute top-3/4 left-3/4 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl floating"
+          style={{ animationDelay: "1.5s" }}
+        ></div>
+      </div>
 
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+      {/* Header */}
+      <header className="relative z-10 mb-8">
+        <div className="glass-card rounded-2xl p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <svg
+                    className="w-7 h-7 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                  Altair Dashboard
+                </h1>
+              </div>
+
+              <div
+                className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm border transition-all duration-300 status-indicator ${
+                  connectionStatus === "connected"
+                    ? "bg-emerald-500/20 text-emerald-100 border-emerald-400/30 glow-green"
+                    : connectionStatus === "error"
+                    ? "bg-red-500/20 text-red-100 border-red-400/30 glow-red"
+                    : "bg-amber-500/20 text-amber-100 border-amber-400/30"
+                }`}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Settings
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      connectionStatus === "connected"
+                        ? "bg-emerald-400"
+                        : connectionStatus === "error"
+                        ? "bg-red-400"
+                        : "bg-amber-400"
+                    }`}
+                  ></div>
+                  {connectionStatus === "connected"
+                    ? "Connected"
+                    : connectionStatus === "error"
+                    ? "Connection Error"
+                    : "Disconnected"}
+                </div>
+              </div>
             </div>
-          </button>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={connectionStatus !== "connected"}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Refresh
-          </button>
+
+            <div className="flex gap-3">
+              {/* Mock Mode Toggle */}
+              <button
+                onClick={toggleMockMode}
+                className={`glass-button px-6 py-3 rounded-xl font-medium text-white transition-all duration-300 ${
+                  mockMode
+                    ? "bg-gradient-to-r from-orange-500/30 to-red-500/30 border-orange-400/40"
+                    : "border-gray-400/30"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {mockMode ? "Mock Mode ON" : "Mock Mode OFF"}
+                </div>
+              </button>
+
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="glass-button px-6 py-3 rounded-xl font-medium text-white border-gray-400/30"
+              >
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Settings
+                </div>
+              </button>
+
+              <button
+                onClick={handleRefresh}
+                className="glass-button px-6 py-3 rounded-xl font-medium text-white border-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={connectionStatus !== "connected"}
+              >
+                <div className="flex items-center gap-3">
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Refresh
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
       {/* Command Parameters with Logs */}
-      <div className="mb-8 bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">
-          Command Parameters & Logs
-        </h2>
+      <div className="relative z-10 mb-8">
+        <div className="glass-card rounded-2xl p-8">
+          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+            Command Parameters & Activity Logs
+          </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Command Parameters Table */}
-          <div>
-            <h3 className="text-lg font-medium mb-3 text-gray-600">
-              Parameters
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
-                      Parameter Name
-                    </th>
-                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
-                      Value
-                    </th>
-                    <th className="text-left p-3 text-gray-600 font-semibold text-sm">
-                      Type
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(cmdParams).map(
-                    ([paramName, paramValue], index) => {
-                      const isEditing = localEditingCmdParam === paramName;
-                      return (
-                        <tr
-                          key={paramName}
-                          className={`${
-                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          } hover:bg-blue-50 group`}
-                        >
-                          <td className="p-3 border-t border-gray-200 text-sm">
-                            {paramName}
-                          </td>
-                          <td className="p-3 border-t border-gray-200">
-                            {isEditing ? (
-                              <input
-                                ref={cmdInputRef}
-                                type="number"
-                                step="0.1"
-                                value={localCmdValue}
-                                onChange={(e) =>
-                                  setLocalCmdValue(e.target.value)
-                                }
-                                onKeyDown={(e) =>
-                                  handleCmdKeyPress(e, paramName)
-                                }
-                                onBlur={() => handleCmdBlur(paramName)}
-                                className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="Press Enter to save, Escape to cancel"
-                              />
-                            ) : (
-                              <div
-                                className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group text-sm"
-                                onClick={() =>
-                                  handleCmdSingleClick(paramName, paramValue)
-                                }
-                                title="Click to edit"
-                              >
-                                {paramValue?.toString() || "0.0"}
-                                <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
-                                  ✏️
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-3 border-t border-gray-200">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                              double
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    }
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-3 text-xs text-gray-500">
-              💡 Click on any value to edit it. Press Enter to save or Escape to
-              cancel.
-            </div>
-          </div>
-
-          {/* Logs Panel */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium text-gray-600">
-                Activity Logs
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {/* Command Parameters Table */}
+            <div className="glass-card rounded-xl p-6">
+              <h3 className="text-xl font-semibold mb-4 text-white/90">
+                Control Parameters
               </h3>
-              <button
-                onClick={clearLogs}
-                className="px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 transition-colors"
-              >
-                Clear Logs
-              </button>
-            </div>
-
-            <div className="bg-black rounded-lg p-3 h-64 overflow-y-auto text-xs font-mono">
-              {logs.length === 0 ? (
-                <div className="text-gray-400 text-center py-8">
-                  No logs yet. Perform actions to see logs here.
-                </div>
-              ) : (
-                logs.map((log) => (
-                  <div key={log.id} className="mb-2 leading-relaxed">
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-400 shrink-0">
-                        [{log.timestamp}]
-                      </span>
-                      <span
-                        className={`${
-                          log.type === "info"
-                            ? "text-blue-400"
-                            : log.type === "success"
-                            ? "text-green-400"
-                            : log.type === "error"
-                            ? "text-red-400"
-                            : log.type === "warning"
-                            ? "text-yellow-400"
-                            : log.type === "websocket"
-                            ? "text-purple-400"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        [{log.type.toUpperCase()}]
-                      </span>
-                      <span className="text-gray-200 break-words">
-                        {log.message}
-                      </span>
-                    </div>
-                    {log.details && (
-                      <div className="mt-1 ml-4 text-gray-400">
-                        <pre className="text-xs whitespace-pre-wrap">
-                          {JSON.stringify(log.details, null, 2)}
-                        </pre>
-                      </div>
+              <div className="overflow-hidden rounded-xl">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-white/10 backdrop-blur-sm">
+                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                        Parameter
+                      </th>
+                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                        Value
+                      </th>
+                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                        Type
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(cmdParams).map(
+                      ([paramName, paramValue], index) => {
+                        const isEditing = localEditingCmdParam === paramName;
+                        return (
+                          <tr
+                            key={paramName}
+                            className={`${
+                              index % 2 === 0 ? "bg-white/5" : "bg-white/10"
+                            } hover:bg-white/20 transition-all duration-200 group`}
+                          >
+                            <td className="p-4 text-white/90 font-medium">
+                              {paramName}
+                            </td>
+                            <td className="p-4">
+                              {isEditing ? (
+                                <input
+                                  ref={cmdInputRef}
+                                  type="number"
+                                  step="0.1"
+                                  value={localCmdValue}
+                                  onChange={(e) =>
+                                    setLocalCmdValue(e.target.value)
+                                  }
+                                  onKeyDown={(e) =>
+                                    handleCmdKeyPress(e, paramName)
+                                  }
+                                  onBlur={() => handleCmdBlur(paramName)}
+                                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-blue-400/50 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
+                                  placeholder="Press Enter to save, Escape to cancel"
+                                />
+                              ) : (
+                                <div
+                                  className="font-mono bg-white/10 backdrop-blur-sm p-3 rounded-lg text-white cursor-pointer hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/40"
+                                  onClick={() =>
+                                    handleCmdSingleClick(paramName, paramValue)
+                                  }
+                                  title="Click to edit"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span>
+                                      {paramValue?.toString() || "0.0"}
+                                    </span>
+                                    <span className="text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      ✏️
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-xs font-medium border border-purple-400/30">
+                                double
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      }
                     )}
-                  </div>
-                ))
-              )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 text-sm text-white/60 bg-white/5 rounded-lg p-3 border border-white/10">
+                💡 Click on any value to edit it. Press Enter to save or Escape
+                to cancel.
+              </div>
             </div>
 
-            {/* Log Legend */}
-            <div className="mt-3 text-xs">
-              <div className="text-gray-600 font-medium mb-1">Log Types:</div>
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span className="text-gray-600">INFO</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-gray-600">SUCCESS</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                  <span className="text-gray-600">ERROR</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  <span className="text-gray-600">WARNING</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                  <span className="text-gray-600">WEBSOCKET</span>
+            {/* Logs Panel */}
+            <div className="glass-card rounded-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-white/90">
+                  Activity Logs
+                </h3>
+                <button
+                  onClick={clearLogs}
+                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg text-sm transition-all duration-200 border border-red-400/30"
+                >
+                  Clear Logs
+                </button>
+              </div>
+
+              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 h-80 overflow-y-auto text-sm font-mono custom-scrollbar border border-white/10">
+                {logs.length === 0 ? (
+                  <div className="text-white/40 text-center py-16">
+                    <div className="text-2xl mb-2">📋</div>
+                    <div>No logs yet. Perform actions to see logs here.</div>
+                  </div>
+                ) : (
+                  logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="mb-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-white/50 shrink-0 text-xs">
+                          [{log.timestamp}]
+                        </span>
+                        <span
+                          className={`shrink-0 text-xs font-bold px-2 py-1 rounded ${
+                            log.type === "info"
+                              ? "bg-blue-500/20 text-blue-300"
+                              : log.type === "success"
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : log.type === "error"
+                              ? "bg-red-500/20 text-red-300"
+                              : log.type === "warning"
+                              ? "bg-amber-500/20 text-amber-300"
+                              : log.type === "websocket"
+                              ? "bg-purple-500/20 text-purple-300"
+                              : "bg-gray-500/20 text-gray-300"
+                          }`}
+                        >
+                          {log.type.toUpperCase()}
+                        </span>
+                        <span className="text-white/80 break-words flex-1">
+                          {log.message}
+                        </span>
+                      </div>
+                      {log.details && (
+                        <div className="mt-2 ml-6 text-white/60 bg-white/5 rounded p-2 border border-white/10">
+                          <pre className="text-xs whitespace-pre-wrap overflow-x-auto">
+                            {JSON.stringify(log.details, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Log Legend */}
+              <div className="mt-4 text-xs">
+                <div className="text-white/70 font-medium mb-2">Log Types:</div>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { type: "info", color: "bg-blue-500", label: "INFO" },
+                    {
+                      type: "success",
+                      color: "bg-emerald-500",
+                      label: "SUCCESS",
+                    },
+                    { type: "error", color: "bg-red-500", label: "ERROR" },
+                    {
+                      type: "warning",
+                      color: "bg-amber-500",
+                      label: "WARNING",
+                    },
+                    {
+                      type: "websocket",
+                      color: "bg-purple-500",
+                      label: "WEBSOCKET",
+                    },
+                  ].map(({ type, color, label }) => (
+                    <div key={type} className="flex items-center gap-2">
+                      <div className={`w-3 h-3 ${color} rounded-full`}></div>
+                      <span className="text-white/60">{label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1285,178 +1346,184 @@ export default function Home() {
 
       {/* Robot Controls */}
       <div className="fixed bottom-8 right-8 z-50">
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() =>
-              handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z)
-            }
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:opacity-50"
-            disabled={connectionStatus !== "connected"}
-            title="Play"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+        <div className="flex flex-col gap-4">
+          {[
+            {
+              action: () =>
+                handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z),
+              icon: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z",
+              label: "Play",
+              bgClass:
+                "from-emerald-500/30 to-green-600/30 border-emerald-400/40 glow-green",
+              hoverClass: "hover:from-emerald-400/40 hover:to-green-500/40",
+            },
+            {
+              action: handleStopRobot,
+              icon: "M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z",
+              label: "Stop",
+              bgClass:
+                "from-red-500/30 to-red-600/30 border-red-400/40 glow-red",
+              hoverClass: "hover:from-red-400/40 hover:to-red-500/40",
+            },
+            {
+              action: handleRobotKick,
+              icon: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
+              label: "Kick",
+              bgClass: "from-amber-500/30 to-orange-600/30 border-amber-400/40",
+              hoverClass: "hover:from-amber-400/40 hover:to-orange-500/40",
+            },
+          ].map((button, index) => (
+            <button
+              key={button.label}
+              onClick={button.action}
+              className={`glass-button bg-gradient-to-r ${button.bgClass} ${button.hoverClass} w-28 h-16 rounded-2xl font-medium text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105`}
+              disabled={connectionStatus !== "connected"}
+              title={button.label}
             >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="font-medium">Play</span>
-          </button>
-
-          <button
-            onClick={handleStopRobot}
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:opacity-50"
-            disabled={connectionStatus !== "connected"}
-            title="Stop"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="font-medium">Stop</span>
-          </button>
-
-          <button
-            onClick={handleRobotKick}
-            className="flex items-center justify-center gap-2 w-24 h-14 bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors disabled:opacity-50"
-            disabled={connectionStatus !== "connected"}
-            title="Kick"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="font-medium">Kick</span>
-          </button>
+              <div className="flex flex-col items-center gap-1">
+                <svg
+                  className="h-6 w-6"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path fillRule="evenodd" d={button.icon} clipRule="evenodd" />
+                </svg>
+                <span className="text-sm">{button.label}</span>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Add the History Section */}
-      <History
-        rosRef={rosRef}
-        connectionStatus={connectionStatus}
-        robotNamespace={robotNamespace}
-        mockMode={mockMode}
-        onRestore={() => {
-          // Function to call after a parameter file is restored
-          setModalType("success");
-          setModalMessage("Parameters restored successfully");
-          setShowModal(true);
-          handleRefresh();
-        }}
-        onRefresh={handleRefresh}
-      />
+      <div className="relative z-10">
+        <History
+          rosRef={rosRef}
+          connectionStatus={connectionStatus}
+          robotNamespace={robotNamespace}
+          mockMode={mockMode}
+          onRestore={() => {
+            setModalType("success");
+            setModalMessage("Parameters restored successfully");
+            setShowModal(true);
+            handleRefresh();
+          }}
+          onRefresh={handleRefresh}
+        />
+      </div>
 
       {/* Parameters */}
-      <HierarchicalParameters
-        parameters={parameters}
-        descriptions={paramDescriptions}
-        connectionStatus={connectionStatus}
-        handleEdit={handleEdit}
-        handleSave={handleSave}
-        setNewValue={setNewValue}
-        newValue={newValue}
-        editingParam={editingParam}
-        selectedParams={selectedParams}
-        onSelectionChange={handleParamSelectionChange}
-        onSelectAll={handleSelectAllParams}
-      />
+      <div className="relative z-10">
+        <HierarchicalParameters
+          parameters={parameters}
+          descriptions={paramDescriptions}
+          connectionStatus={connectionStatus}
+          handleEdit={handleEdit}
+          handleSave={handleSave}
+          setNewValue={setNewValue}
+          newValue={newValue}
+          editingParam={editingParam}
+          selectedParams={selectedParams}
+          onSelectionChange={handleParamSelectionChange}
+          onSelectAll={handleSelectAllParams}
+        />
+      </div>
 
       {/* Save Button */}
-      <div className="flex justify-center mb-6">
+      <div className="relative z-10 flex justify-center mb-8">
         <button
           onClick={saveParameters}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium"
+          className="glass-button bg-gradient-to-r from-blue-500/30 to-purple-600/30 border-blue-400/40 px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 disabled:opacity-50 hover:from-blue-400/40 hover:to-purple-500/40 transform hover:scale-105 glow-blue"
           disabled={connectionStatus !== "connected" || isLoadingSave}
         >
-          {isLoadingSave ? (
-            <>
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Saving...
-            </>
-          ) : (
-            <>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-              </svg>
-              Save Selected Parameters to File
-            </>
-          )}
+          <div className="flex items-center gap-3">
+            {isLoadingSave ? (
+              <>
+                <svg
+                  className="animate-spin h-6 w-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span className="text-lg">Saving...</span>
+              </>
+            ) : (
+              ((
+                <>
+                  <svg
+                    className="h-6 w-6"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                  </svg>
+                </>
+              ),
+              (
+                <span className="text-lg">
+                  Save Selected Parameters to File
+                </span>
+              ))
+            )}
+          </div>
         </button>
       </div>
 
       {/* Modal for saving parameters status */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20">
+            <div className="flex justify-between items-center mb-6">
               <h3
-                className={`text-lg font-medium ${
+                className={`text-xl font-bold ${
                   modalType === "success"
-                    ? "text-green-700"
+                    ? "text-emerald-200"
                     : modalType === "warning"
-                    ? "text-yellow-700"
-                    : "text-red-700"
+                    ? "text-amber-200"
+                    : "text-red-200"
                 }`}
               >
-                {modalType === "success"
-                  ? "Success"
-                  : modalType === "warning"
-                  ? "Warning"
-                  : "Error"}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      modalType === "success"
+                        ? "bg-emerald-500/20"
+                        : modalType === "warning"
+                        ? "bg-amber-500/20"
+                        : "bg-red-500/20"
+                    }`}
+                  >
+                    {modalType === "success"
+                      ? "✓"
+                      : modalType === "warning"
+                      ? "⚠"
+                      : "✕"}
+                  </div>
+                  {modalType === "success"
+                    ? "Success"
+                    : modalType === "warning"
+                    ? "Warning"
+                    : "Error"}
+                </div>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-white/60 hover:text-white transition-colors p-1"
               >
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -1471,18 +1538,18 @@ export default function Home() {
                 </svg>
               </button>
             </div>
-            <div className="mb-6">
-              <p className="text-gray-700">{modalMessage}</p>
+            <div className="mb-8">
+              <p className="text-white/80 leading-relaxed">{modalMessage}</p>
             </div>
             <div className="flex justify-end">
               <button
                 onClick={() => setShowModal(false)}
-                className={`px-4 py-2 rounded-md text-white ${
+                className={`glass-button px-6 py-3 rounded-xl text-white font-medium ${
                   modalType === "success"
-                    ? "bg-green-600 hover:bg-green-700"
+                    ? "bg-emerald-500/20 border-emerald-400/30"
                     : modalType === "warning"
-                    ? "bg-yellow-600 hover:bg-yellow-700"
-                    : "bg-red-600 hover:bg-red-700"
+                    ? "bg-amber-500/20 border-amber-400/30"
+                    : "bg-red-500/20 border-red-400/30"
                 }`}
               >
                 Close
@@ -1506,7 +1573,7 @@ export default function Home() {
         id="param-tooltip"
         place="right"
         effect="solid"
-        className="z-[1000] max-w-xs bg-gray-800 text-white p-2 text-sm rounded shadow-lg"
+        className="z-[1000] max-w-xs !bg-black/80 !backdrop-blur-sm !text-white !p-3 !text-sm !rounded-xl !shadow-xl !border !border-white/20"
       />
     </div>
   );

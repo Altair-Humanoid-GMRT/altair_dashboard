@@ -472,39 +472,43 @@ export default function History({
 
   const renderFileList = () => {
     return (
-      <div className="overflow-auto max-h-[400px] bg-white rounded-lg shadow">
-        <table className="min-w-full">
-          <thead className="bg-gray-50 sticky top-0">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      <div className="overflow-hidden rounded-xl border border-white/20">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-white/10 backdrop-blur-sm">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
                 Filename
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
                 Modified
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-white/10">
             {historyFiles.map((file, index) => (
               <tr
                 key={index}
                 className={`${
-                  selectedFile?.path === file.path ? "bg-blue-50" : ""
-                } hover:bg-gray-50`}
+                  selectedFile?.path === file.path
+                    ? "bg-blue-500/20 border-blue-400/30"
+                    : index % 2 === 0
+                    ? "bg-white/5"
+                    : "bg-white/10"
+                } hover:bg-white/20 transition-all duration-200`}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white/90">
                   {file.filename}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white/70">
                   {file.modified}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
                     onClick={() => previewFile(file)}
-                    className="text-blue-600 hover:text-blue-900 mr-2"
+                    className="glass-button bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-3 py-1 rounded-lg transition-all duration-200 border border-blue-400/30"
                   >
                     Preview
                   </button>
@@ -513,14 +517,14 @@ export default function History({
                     selectedFile.path !== file.path && (
                       <button
                         onClick={() => selectForComparison(file)}
-                        className="text-purple-600 hover:text-purple-900 mr-2"
+                        className="glass-button bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 px-3 py-1 rounded-lg transition-all duration-200 border border-purple-400/30"
                       >
                         Compare
                       </button>
                     )}
                   <button
                     onClick={() => loadParameterFile(file.path)}
-                    className="text-green-600 hover:text-green-900 mr-2"
+                    className="glass-button bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 px-3 py-1 rounded-lg transition-all duration-200 border border-emerald-400/30"
                   >
                     Restore
                   </button>
@@ -529,7 +533,7 @@ export default function History({
                       setSelectedFileToDelete(file);
                       setDeleteModal(true);
                     }}
-                    className="text-red-600 hover:text-red-900"
+                    className="glass-button bg-red-500/20 hover:bg-red-500/30 text-red-200 px-3 py-1 rounded-lg transition-all duration-200 border border-red-400/30"
                   >
                     Delete
                   </button>
@@ -559,23 +563,25 @@ export default function History({
     });
 
     return (
-      <div className="mt-4 bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-medium mb-4">Parameter Comparison</h3>
+      <div className="mt-6 glass-card rounded-xl p-6 border border-white/20">
+        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+          Parameter Comparison
+        </h3>
 
-        <div className="grid grid-cols-3 gap-4 mb-2 font-semibold bg-gray-100 p-2">
-          <div>Parameter</div>
-          <div className="text-blue-600">
+        <div className="grid grid-cols-3 gap-4 mb-4 font-semibold bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20">
+          <div className="text-white/90">Parameter</div>
+          <div className="text-blue-300">
             {selectedFile?.filename} (Selected)
           </div>
-          <div className="text-purple-600">
+          <div className="text-purple-300">
             {compareFile?.filename} (Compare)
           </div>
         </div>
 
-        <div className="overflow-auto max-h-[400px]">
+        <div className="overflow-auto max-h-[400px] custom-scrollbar">
           {Object.entries(groupedResults).map(([topLevel, params]) => (
             <div key={topLevel} className="mb-4">
-              <h4 className="font-bold text-gray-700 mb-2 bg-gray-50 p-2">
+              <h4 className="font-bold text-white/90 mb-2 bg-white/5 backdrop-blur-sm p-3 rounded-lg border border-white/10">
                 {topLevel}
               </h4>
 
@@ -588,43 +594,45 @@ export default function History({
                 return (
                   <div
                     key={index}
-                    className={`grid grid-cols-3 gap-4 py-2 ${
-                      isDifferent ? "bg-yellow-50" : ""
-                    } border-b border-gray-200`}
+                    className={`grid grid-cols-3 gap-4 py-3 px-3 rounded-lg mb-2 transition-all duration-200 ${
+                      isDifferent
+                        ? "bg-amber-500/10 border border-amber-400/30"
+                        : "bg-white/5 border border-white/10"
+                    }`}
                   >
-                    <div className="font-mono text-sm break-all">
+                    <div className="font-mono text-sm break-all text-white/80">
                       {displayKey}
                     </div>
                     <div
-                      className={`${
-                        isDifferent ? "text-blue-600" : ""
-                      } break-all`}
+                      className={`break-all ${
+                        isDifferent ? "text-blue-300" : "text-white/70"
+                      }`}
                     >
                       {param.value1 === undefined ? (
                         <span className="text-gray-400">undefined</span>
                       ) : typeof param.value1 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap">
+                        <pre className="text-xs whitespace-pre-wrap bg-black/20 p-2 rounded border border-white/10">
                           {JSON.stringify(param.value1, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm">
+                        <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20">
                           {String(param.value1)}
                         </span>
                       )}
                     </div>
                     <div
-                      className={`${
-                        isDifferent ? "text-purple-600" : ""
-                      } break-all`}
+                      className={`break-all ${
+                        isDifferent ? "text-purple-300" : "text-white/70"
+                      }`}
                     >
                       {param.value2 === undefined ? (
                         <span className="text-gray-400">undefined</span>
                       ) : typeof param.value2 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap">
+                        <pre className="text-xs whitespace-pre-wrap bg-black/20 p-2 rounded border border-white/10">
                           {JSON.stringify(param.value2, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm">
+                        <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20">
                           {String(param.value2)}
                         </span>
                       )}
@@ -641,15 +649,15 @@ export default function History({
 
   const renderParameterValue = (value, level = 0) => {
     if (value === null || value === undefined) {
-      return <span className="text-gray-400">null</span>;
+      return <span className="text-white/40">null</span>;
     }
 
     if (typeof value === "object" && !Array.isArray(value)) {
       return (
-        <div className="pl-4">
+        <div className="pl-4 border-l border-white/20">
           {Object.entries(value).map(([k, v]) => (
             <div key={k} className="py-1">
-              <span className="font-medium text-gray-700">{k}: </span>
+              <span className="font-medium text-white/80">{k}: </span>
               {renderParameterValue(v, level + 1)}
             </div>
           ))}
@@ -659,7 +667,7 @@ export default function History({
 
     if (Array.isArray(value)) {
       return (
-        <div className="font-mono text-sm">
+        <div className="font-mono text-sm bg-white/10 p-2 rounded border border-white/20 text-white/80">
           [
           {value.map((item, i) => (
             <span key={i} className="ml-2">
@@ -675,7 +683,11 @@ export default function History({
     }
 
     // For primitive values
-    return <span className="font-mono text-sm">{value.toString()}</span>;
+    return (
+      <span className="font-mono text-sm bg-white/10 px-2 py-1 rounded border border-white/20 text-white/80">
+        {value.toString()}
+      </span>
+    );
   };
 
   const renderParameterPreview = () => {
@@ -683,13 +695,18 @@ export default function History({
 
     // Display with hierarchy preserved
     return (
-      <div className="mt-4 bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-medium mb-4">Parameter Preview</h3>
-        <div className="overflow-auto max-h-[400px]">
+      <div className="mt-6 glass-card rounded-xl p-6 border border-white/20">
+        <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+          Parameter Preview
+        </h3>
+        <div className="overflow-auto max-h-[400px] custom-scrollbar">
           {Object.entries(previewParams).map(([key, value]) => (
-            <div key={key} className="py-2 border-b border-gray-200">
-              <div className="font-medium">{key}</div>
-              {renderParameterValue(value)}
+            <div
+              key={key}
+              className="py-3 border-b border-white/10 last:border-b-0"
+            >
+              <div className="font-medium text-white/90 mb-2">{key}</div>
+              <div className="ml-4">{renderParameterValue(value)}</div>
             </div>
           ))}
         </div>
@@ -698,42 +715,76 @@ export default function History({
   };
 
   return (
-    <div className="mb-8 bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-700">
+    <div className="mb-8 glass-card rounded-2xl p-8 border border-white/20">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
           Parameter History
         </h2>
-        <div className="flex space-x-2">
+        <div className="flex space-x-3">
           <button
             onClick={toggleCompareMode}
-            className={`px-3 py-1 ${
-              compareMode ? "bg-purple-600" : "bg-blue-600"
-            } text-white rounded hover:opacity-90 transition-colors`}
+            className={`glass-button px-6 py-3 rounded-xl font-medium text-white transition-all duration-300 ${
+              compareMode
+                ? "bg-gradient-to-r from-purple-500/30 to-purple-600/30 border-purple-400/40"
+                : "bg-gradient-to-r from-blue-500/30 to-blue-600/30 border-blue-400/40"
+            } hover:scale-105`}
           >
-            {compareMode ? "Exit Compare Mode" : "Compare Mode"}
+            <div className="flex items-center gap-2">
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {compareMode ? "Exit Compare Mode" : "Compare Mode"}
+            </div>
           </button>
           <button
             onClick={fetchHistoryFiles}
-            className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+            className="glass-button bg-gradient-to-r from-gray-500/30 to-gray-600/30 border-gray-400/40 px-6 py-3 rounded-xl font-medium text-white hover:from-gray-400/40 hover:to-gray-500/40 transition-all duration-300 hover:scale-105"
           >
-            Refresh
+            <div className="flex items-center gap-2">
+              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Refresh
+            </div>
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="bg-red-500/20 border border-red-400/30 text-red-200 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <svg
+              className="h-5 w-5 text-red-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            {error}
+          </div>
         </div>
       )}
 
       {loading ? (
         <div className="flex justify-center items-center h-40">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-400/30 rounded-full"></div>
+            <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+          </div>
         </div>
       ) : historyFiles.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          No history files found
+        <div className="text-center py-16 text-white/60">
+          <div className="text-6xl mb-4">📂</div>
+          <div className="text-xl mb-2">No history files found</div>
+          <div>Parameter configurations will appear here when saved</div>
         </div>
       ) : (
         <div>
@@ -746,32 +797,58 @@ export default function History({
       )}
 
       {deleteModal && selectedFileToDelete && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
-          onClick={() => setDeleteModal(false)}
-        >
-          <div
-            className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">
-              Are you sure you want to delete &quot;
-              {selectedFileToDelete.filename}&quot;? This action cannot be
-              undone.
-            </p>
-            <div className="flex justify-end space-x-3">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-red-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-500/20">
+                    ⚠️
+                  </div>
+                  Confirm Delete
+                </div>
+              </h3>
               <button
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                onClick={() => setDeleteModal(false)}
+                className="text-white/60 hover:text-white transition-colors p-1"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-8">
+              <p className="text-white/80 leading-relaxed">
+                Are you sure you want to delete &quot;
+                <span className="font-semibold text-white">
+                  {selectedFileToDelete.filename}
+                </span>
+                &quot;? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                className="glass-button px-6 py-3 rounded-xl text-white font-medium bg-gray-500/20 border-gray-400/30 hover:bg-gray-500/30"
                 onClick={() => setDeleteModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="glass-button px-6 py-3 rounded-xl text-white font-medium bg-red-500/20 border-red-400/30 hover:bg-red-500/30"
                 onClick={() => {
                   confirmDelete(selectedFileToDelete);
                   setDeleteModal(false);
+                  setSelectedFileToDelete(null);
                 }}
               >
                 Delete

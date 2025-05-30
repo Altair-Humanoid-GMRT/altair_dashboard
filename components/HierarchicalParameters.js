@@ -122,7 +122,9 @@ const HierarchicalParameters = ({
     return (
       <div
         className="pl-4"
-        style={{ borderLeft: depth > 0 ? "1px solid #e5e7eb" : "none" }}
+        style={{
+          borderLeft: depth > 0 ? "1px solid rgba(255, 255, 255, 0.2)" : "none",
+        }}
       >
         {entries.map(([key, value]) => {
           if (key === "_children") return null;
@@ -136,10 +138,10 @@ const HierarchicalParameters = ({
             return (
               <div key={newPath} className="mb-2">
                 <div
-                  className="flex items-center py-2 cursor-pointer group hover:bg-gray-50 rounded"
+                  className="flex items-center py-2 cursor-pointer group hover:bg-white/10 rounded-lg transition-all duration-200 backdrop-blur-sm px-3"
                   onClick={() => toggleSection(newPath)}
                 >
-                  <div className="w-5 h-5 mr-2 flex items-center justify-center text-gray-500">
+                  <div className="w-5 h-5 mr-2 flex items-center justify-center text-white/60">
                     {isExpanded ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -173,7 +175,7 @@ const HierarchicalParameters = ({
                     )}
                   </div>
                   <span
-                    className="font-medium text-gray-700"
+                    className="font-medium text-white/90"
                     data-tooltip-id="param-tooltip"
                     data-tooltip-content={
                       descriptions[newPath]?.description ||
@@ -182,7 +184,7 @@ const HierarchicalParameters = ({
                   >
                     {key}
                   </span>
-                  <span className="ml-2 text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                  <span className="ml-2 text-xs text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
                     {Object.keys(value._children).length} parameter
                     {Object.keys(value._children).length !== 1 ? "s" : ""}
                   </span>
@@ -201,7 +203,7 @@ const HierarchicalParameters = ({
             return (
               <div
                 key={newPath}
-                className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded"
+                className="mb-3 pl-7 pr-3 py-2 hover:bg-white/10 rounded-lg group transition-all duration-200"
               >
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between">
@@ -212,11 +214,11 @@ const HierarchicalParameters = ({
                         onChange={(e) =>
                           onSelectionChange(value.fullName, e.target.checked)
                         }
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-blue-400 focus:ring-blue-400 border-white/30 rounded bg-white/10 backdrop-blur-sm"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <span
-                        className="font-medium text-gray-700"
+                        className="font-medium text-white/90"
                         data-tooltip-id="param-tooltip"
                         data-tooltip-content={
                           descriptions[value.fullName]?.description ||
@@ -225,7 +227,7 @@ const HierarchicalParameters = ({
                       >
                         {key}
                       </span>
-                      <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                      <span className="ml-2 px-2 py-0.5 bg-purple-500/20 text-purple-200 rounded-full text-xs border border-purple-400/30">
                         {value.data.type === 1
                           ? "bool"
                           : value.data.type === 2
@@ -240,7 +242,7 @@ const HierarchicalParameters = ({
                       </span>
                     </div>
                     {connectionStatus === "connected" && (
-                      <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                      <div className="text-xs text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to edit
                       </div>
                     )}
@@ -255,12 +257,12 @@ const HierarchicalParameters = ({
                         onChange={(e) => setLocalNewValue(e.target.value)}
                         onKeyDown={(e) => handleKeyPress(e, value.fullName)}
                         onBlur={() => handleBlur(value.fullName)}
-                        className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-3 bg-white/20 backdrop-blur-sm border border-blue-400/50 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
                         placeholder="Press Enter to save, Escape to cancel"
                       />
                     ) : (
                       <div
-                        className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group"
+                        className="font-mono bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20 text-white/80 cursor-pointer hover:bg-white/20 transition-all duration-200 group"
                         onClick={() =>
                           handleSingleClick(value.fullName, value.data.value)
                         }
@@ -270,12 +272,16 @@ const HierarchicalParameters = ({
                             : "Connect to ROS to edit"
                         }
                       >
-                        {value.data.value?.toString() || "undefined"}
-                        {connectionStatus === "connected" && (
-                          <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
-                            ✏️
+                        <div className="flex items-center justify-between">
+                          <span>
+                            {value.data.value?.toString() || "undefined"}
                           </span>
-                        )}
+                          {connectionStatus === "connected" && (
+                            <span className="text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                              ✏️
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -301,7 +307,7 @@ const HierarchicalParameters = ({
             return (
               <div
                 key={paramName}
-                className="mb-3 pl-7 pr-3 py-2 hover:bg-blue-50 rounded group"
+                className="mb-3 pl-7 pr-3 py-2 hover:bg-white/10 rounded-lg group transition-all duration-200"
               >
                 <div className="flex flex-col">
                   <div className="flex items-center justify-between">
@@ -312,11 +318,11 @@ const HierarchicalParameters = ({
                         onChange={(e) =>
                           onSelectionChange(paramName, e.target.checked)
                         }
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-blue-400 focus:ring-blue-400 border-white/30 rounded bg-white/10 backdrop-blur-sm"
                         onClick={(e) => e.stopPropagation()}
                       />
                       <span
-                        className="font-medium text-gray-700"
+                        className="font-medium text-white/90"
                         data-tooltip-id="param-tooltip"
                         data-tooltip-content={
                           descriptions[paramName]?.description ||
@@ -325,7 +331,7 @@ const HierarchicalParameters = ({
                       >
                         {paramName}
                       </span>
-                      <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                      <span className="ml-2 px-2 py-0.5 bg-purple-500/20 text-purple-200 rounded-full text-xs border border-purple-400/30">
                         {paramData.type === 1
                           ? "bool"
                           : paramData.type === 2
@@ -340,7 +346,7 @@ const HierarchicalParameters = ({
                       </span>
                     </div>
                     {connectionStatus === "connected" && (
-                      <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                      <div className="text-xs text-white/50 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to edit
                       </div>
                     )}
@@ -355,12 +361,12 @@ const HierarchicalParameters = ({
                         onChange={(e) => setLocalNewValue(e.target.value)}
                         onKeyDown={(e) => handleKeyPress(e, paramName)}
                         onBlur={() => handleBlur(paramName)}
-                        className="w-full p-2 border-2 border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full p-3 bg-white/20 backdrop-blur-sm border border-blue-400/50 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
                         placeholder="Press Enter to save, Escape to cancel"
                       />
                     ) : (
                       <div
-                        className="font-mono bg-gray-50 p-2 rounded border border-gray-200 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors group"
+                        className="font-mono bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20 text-white/80 cursor-pointer hover:bg-white/20 transition-all duration-200 group"
                         onClick={() =>
                           handleSingleClick(paramName, paramData.value)
                         }
@@ -370,12 +376,16 @@ const HierarchicalParameters = ({
                             : "Connect to ROS to edit"
                         }
                       >
-                        {paramData.value?.toString() || "undefined"}
-                        {connectionStatus === "connected" && (
-                          <span className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100">
-                            ✏️
+                        <div className="flex items-center justify-between">
+                          <span>
+                            {paramData.value?.toString() || "undefined"}
                           </span>
-                        )}
+                          {connectionStatus === "connected" && (
+                            <span className="text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                              ✏️
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -388,21 +398,23 @@ const HierarchicalParameters = ({
   };
 
   return (
-    <div className="mb-8 bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-700">Parameters</h2>
-        <div className="flex space-x-2">
-          <div className="text-sm text-gray-500">
+    <div className="mb-8 glass-card rounded-2xl p-8 border border-white/20">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+          Parameters
+        </h2>
+        <div className="flex space-x-3">
+          <div className="text-sm text-white/60 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg border border-white/20">
             {selectionStats.selected} of {selectionStats.total} parameters
             selected
           </div>
           <button
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm flex items-center"
+            className="glass-button bg-gray-500/20 hover:bg-gray-500/30 text-white px-4 py-2 rounded-lg text-sm flex items-center border border-gray-400/30 transition-all duration-200"
             onClick={() => setExpandedSections({})}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 mr-1"
+              className="h-4 w-4 mr-2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -417,7 +429,7 @@ const HierarchicalParameters = ({
             Collapse All
           </button>
           <button
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm flex items-center"
+            className="glass-button bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-4 py-2 rounded-lg text-sm flex items-center border border-blue-400/30 transition-all duration-200"
             onClick={() => {
               const allPaths = {};
               const collectPaths = (obj, path = "") => {
@@ -439,7 +451,7 @@ const HierarchicalParameters = ({
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 mr-1"
+              className="h-4 w-4 mr-2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -456,18 +468,18 @@ const HierarchicalParameters = ({
         </div>
       </div>
 
-      <div className="border-b border-gray-200 mb-4"></div>
+      <div className="border-b border-white/20 mb-6"></div>
 
       {/* Parameter selection controls */}
-      <div className="mb-4 flex items-center space-x-3">
-        <label className="flex items-center">
+      <div className="mb-6 flex items-center space-x-4">
+        <label className="flex items-center glass-card rounded-lg p-3 border border-white/20 hover:bg-white/10 transition-all duration-200 cursor-pointer">
           <input
             type="checkbox"
-            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-5 w-5 text-blue-400 focus:ring-blue-400 border-white/30 rounded bg-white/10 backdrop-blur-sm"
             checked={selectionStats.allSelected}
             onChange={(e) => onSelectAll(e.target.checked)}
           />
-          <span className="ml-2 text-sm font-medium text-gray-700">
+          <span className="ml-3 text-sm font-medium text-white/90">
             {selectionStats.allSelected
               ? "Deselect All"
               : selectionStats.someSelected
@@ -478,19 +490,19 @@ const HierarchicalParameters = ({
       </div>
 
       {/* Search input */}
-      <div className="mb-4">
+      <div className="mb-6">
         <div className="relative">
           <input
             type="text"
             placeholder="Search parameters..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 pl-8 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-4 pl-12 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
           />
-          <div className="absolute left-2 top-2 text-gray-400">
+          <div className="absolute left-4 top-4 text-white/50">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-6 w-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
