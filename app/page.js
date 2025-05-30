@@ -366,7 +366,7 @@ export default function Home() {
             // Stop after a brief period
             setTimeout(() => {
               handleStopRobot();
-            }, 300); // 500ms duration for the command to execute
+            }, 100); // 500ms duration for the command to execute
           }, 300); // Wait for parameters to be applied
         } else {
           console.error(response.results[0]);
@@ -542,6 +542,8 @@ export default function Home() {
       return;
     }
 
+    handlePlayRobot(0, 0, 0);
+
     const cmdVel = new ROSLIB.Topic({
       ros: rosRef.current,
       name: "/kick",
@@ -553,6 +555,8 @@ export default function Home() {
     });
 
     cmdVel.publish(kick);
+
+    handleStopRobot();
   };
 
   const handleCmdParamsSave = () => {
