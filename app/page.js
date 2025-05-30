@@ -366,7 +366,7 @@ export default function Home() {
             // Stop after a brief period
             setTimeout(() => {
               handleStopRobot();
-            }, 500); // 500ms duration for the command to execute
+            }, 300); // 500ms duration for the command to execute
           }, 300); // Wait for parameters to be applied
         } else {
           console.error(response.results[0]);
