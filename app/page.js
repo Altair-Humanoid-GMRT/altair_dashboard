@@ -359,6 +359,15 @@ export default function Home() {
         if (response.results[0].successful) {
           console.log(`Parameter ${paramName} updated successfully.`);
           fetchAllParameters(); // Refresh the parameter list
+          setTimeout(() => {
+            // Execute play with current parameters
+            handlePlayRobot(0, 0, 0);
+
+            // Stop after a brief period
+            setTimeout(() => {
+              handleStopRobot();
+            }, 500); // 500ms duration for the command to execute
+          }, 300); // Wait for parameters to be applied
         } else {
           console.error(response.results[0]);
           console.error(`Failed to update parameter ${paramName}.`);
@@ -447,19 +456,6 @@ export default function Home() {
         }
       );
     }, 300);
-
-    // After successful save, execute start and stop commands
-    if (response.success) {
-      setTimeout(() => {
-        // Execute play with current parameters
-        handlePlayRobot(0, 0, 0);
-
-        // Stop after a brief period
-        setTimeout(() => {
-          handleStopRobot();
-        }, 500); // 500ms duration for the command to execute
-      }, 300); // Wait for parameters to be applied
-    }
   };
 
   // Function to handle editing a parameter
