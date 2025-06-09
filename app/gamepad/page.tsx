@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import ROSLIB from "roslib";
+import ConnectionStatusBar from "@/components/ConnectionStatusBar";
+import { useRos } from "@/contexts/RosContext";
 
 interface TouchPosition {
   x: number;
@@ -8,8 +10,9 @@ interface TouchPosition {
 }
 
 export default function VirtualGamepad() {
-  const [rosConnected, setRosConnected] = useState(false);
-  const [connectionUri, setConnectionUri] = useState("ws://localhost:9090");
+  const { isConnected, getRos, robotNamespace, connectionStatus } = useRos();
+  
+  // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   
   // Value caps with default maximum of 0.1
@@ -33,55 +36,39 @@ export default function VirtualGamepad() {
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const rosRef = useRef<ROSLIB.Ros | null>(null);
   const cmdVelRef = useRef<ROSLIB.Topic | null>(null);
   const kickRef = useRef<ROSLIB.Topic | null>(null);
   const leftJoystickRef = useRef<HTMLDivElement>(null);
   const rightJoystickRef = useRef<HTMLDivElement>(null);
 
-  // Initialize ROS connection
+  // Initialize ROS topics when connected
   useEffect(() => {
-    const ros = new ROSLIB.Ros({ url: connectionUri });
+    if (!isConnected) {
+      cmdVelRef.current = null;
+      kickRef.current = null;
+      return;
+    }
 
-    ros.on("connection", () => {
-      console.log("ROS Connected");
-      setRosConnected(true);
-      
-      // Initialize cmd_vel topic
-      cmdVelRef.current = new ROSLIB.Topic({
-        ros: ros,
-        name: "/cmd_vel",
-        messageType: "geometry_msgs/Twist",
-      });
-
-      // Initialize kick topic
-      kickRef.current = new ROSLIB.Topic({
-        ros: ros,
-        name: "/kick",
-        messageType: "std_msgs/Bool",
-      });
-    });
-
-    ros.on("error", (err) => {
-      console.error("ROS Error:", err);
-      setRosConnected(false);
-    });
-
-    ros.on("close", () => {
-      console.log("ROS Disconnected");
-      setRosConnected(false);
-    });
-
-    rosRef.current = ros;
+    const ros = getRos();
     
-    return () => {
-      ros.close();
-    };
-  }, [connectionUri]);
+    // Initialize cmd_vel topic
+    cmdVelRef.current = new ROSLIB.Topic({
+      ros: ros,
+      name: "/cmd_vel",
+      messageType: "geometry_msgs/Twist",
+    });
+
+    // Initialize kick topic
+    kickRef.current = new ROSLIB.Topic({
+      ros: ros,
+      name: "/kick",
+      messageType: "std_msgs/Bool",
+    });
+  }, [isConnected, getRos]);
 
   // Send twist message
   const sendTwist = useCallback((x: number, y: number, theta: number) => {
-    if (!rosConnected || !cmdVelRef.current) return;
+    if (!isConnected || !cmdVelRef.current) return;
 
     const twist = new ROSLIB.Message({
       linear: {
@@ -97,20 +84,21 @@ export default function VirtualGamepad() {
     });
 
     cmdVelRef.current.publish(twist);
-  }, [rosConnected]);
+  }, [isConnected]);
 
+  // Stop handler
   const stopHandler = useCallback(() => {
-    if (!rosConnected || !cmdVelRef.current) return;
+    if (!isConnected || !cmdVelRef.current) return;
     const stopTwist = new ROSLIB.Message({
       linear: { x: 0, y: 0, z: 0 },
       angular: { x: -1, y: 0, z: 0 },
     });
     cmdVelRef.current.publish(stopTwist);
-  }, [rosConnected]);
+  }, [isConnected]);
 
   // Send kick command
   const sendKick = useCallback(() => {
-    if (!rosConnected || !kickRef.current) return;
+    if (!isConnected || !kickRef.current) return;
 
     const kickMsg = new ROSLIB.Message({
       data: true,
@@ -118,7 +106,7 @@ export default function VirtualGamepad() {
 
     kickRef.current.publish(kickMsg);
     console.log("Kick command sent!");
-  }, [rosConnected]);
+  }, [isConnected]);
 
   // Fullscreen functionality
   const toggleFullscreen = useCallback(() => {
@@ -326,12 +314,61 @@ export default function VirtualGamepad() {
 
   return (
     <div className="fixed inset-0 bg-gray-900 overflow-hidden touch-none select-none">
-      {/* Settings Modal */}
+      {/* Connection Status Bar */}
+      <ConnectionStatusBar showFullControls={false} />
+
+      {/* Top Bar - Adjusted to account for ConnectionStatusBar */}
+      <div className="absolute top-16 left-0 right-0 z-40 p-4">
+        <div className="flex items-center justify-between">
+          {/* Back Button */}
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Right side buttons */}
+          <div className="flex items-center gap-3">
+            {/* Settings Button - Just for control limits */}
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+
+            {/* Fullscreen Button */}
+            <button
+              onClick={toggleFullscreen}
+              className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M15 9V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 15v4.5M15 15h4.5M15 15l5.5 5.5" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Modal - Only for control limits */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Control Limits</h3>
               <button
                 onClick={() => setShowSettingsModal(false)}
                 className="text-gray-500 hover:text-gray-700 p-1"
@@ -342,21 +379,8 @@ export default function VirtualGamepad() {
               </button>
             </div>
             
-            {/* ROS Connection */}
-            <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-800 mb-2">ROS Connection</h4>
-              <input
-                type="text"
-                value={connectionUri}
-                onChange={(e) => setConnectionUri(e.target.value)}
-                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="ws://localhost:9090"
-              />
-            </div>
-
             {/* Value Caps */}
             <div className="mb-4">
-              <h4 className="text-md font-medium text-gray-800 mb-3">Control Limits</h4>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -415,77 +439,16 @@ export default function VirtualGamepad() {
         </div>
       )}
 
-      {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 z-40 p-4">
-        <div className="flex items-center justify-between">
-          {/* Back Button */}
-          <button
-            onClick={() => (window.location.href = "/")}
-            className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          {/* Connection Status */}
-          <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-            rosConnected 
-              ? "bg-green-600 text-white" 
-              : "bg-red-600 text-white"
-          }`}>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                rosConnected ? "bg-green-300" : "bg-red-300"
-              }`}></div>
-              {rosConnected ? "Connected" : "Disconnected"}
-            </div>
-          </div>
-
-          {/* Right Side Buttons */}
-          <div className="flex items-center gap-2">
-            {/* Fullscreen Button */}
-            <button
-              onClick={toggleFullscreen}
-              className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              {isFullscreen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M15 9V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 15v4.5M15 15h4.5M15 15l5.5 5.5" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              )}
-            </button>
-
-            {/* Settings Button */}
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="bg-gray-800 bg-opacity-90 text-white p-3 rounded-full hover:bg-opacity-100 transition-all"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
+      {/* Control Values Display */}
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 mt-2">
+        <div className="bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg">
+          <div className="flex gap-3 text-xs">
+        <span>X: {controlValues.x.toFixed(2)}</span>
+        <span>Y: {controlValues.y.toFixed(2)}</span>
+        <span>θ: {controlValues.theta.toFixed(2)}</span>
           </div>
         </div>
       </div>
-
-      
-    {/* Control Values Display */}
-    <div className="absolute top-4 right-32 z-40">
-        <div className="bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg">
-            <div className="flex gap-3 text-xs">
-                <span>X: {controlValues.x.toFixed(2)}</span>
-                <span>Y: {controlValues.y.toFixed(2)}</span>
-                <span>θ: {controlValues.theta.toFixed(2)}</span>
-            </div>
-        </div>
-    </div>
 
       {/* PlayStation-style Layout */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -555,36 +518,36 @@ export default function VirtualGamepad() {
               {/* KICK Button */}
               <button
                 onClick={sendKick}
-                disabled={!rosConnected}
+                disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
                 <div className="flex flex-col items-center">
                   <div className="text-sm sm:text-base">⚽</div>
-                  <div className="text-xxs">K</div>
+                  <div className="text-xxs">Kick</div>
                 </div>
               </button>
               
               {/* STOP Button */}
               <button
                 onClick={() => stopHandler()}
-                disabled={!rosConnected}
+                disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
                 <div className="flex flex-col items-center">
                   <div className="text-sm sm:text-base">⏹</div>
-                  <div className="text-xxs">S</div>
+                  <div className="text-xxs">Stop</div>
                 </div>
               </button>
 
               {/* WALK IN SPOT Button */}
               <button
                 onClick={() => sendTwist(0, 0, 0)}
-                disabled={!rosConnected}
+                disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
                 <div className="flex flex-col items-center">
                   <div className="text-sm sm:text-base">🚶</div>
-                  <div className="text-xxs">W</div>
+                  <div className="text-xxs">Start</div>
                 </div>
               </button>
             </div>

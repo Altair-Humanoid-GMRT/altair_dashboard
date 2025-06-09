@@ -2,48 +2,44 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import ROSLIB from "roslib";
+import ConnectionStatusBar from "@/components/ConnectionStatusBar";
+import { useRos } from "@/contexts/RosContext";
+
+interface RobotPosition {
+  x: number;
+  y: number;
+  theta: number;
+  heading: string;
+  timestamp: string;
+}
+
+interface Marker {
+  id: number;
+  x: number;
+  y: number;
+  heading: string;
+  timestamp: string;
+  status: string;
+}
 
 export default function RobotMapWithHeading() {
   const mapRef = useRef(null);
-  const [robotPos, setRobotPos] = useState(null);
-  const [ros, setRos] = useState(null);
-  const [markers, setMarkers] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
-
-  // Initialize ROS connection
-  useEffect(() => {
-    const ros = new ROSLIB.Ros({ url: "ws://localhost:9090" });
-
-    ros.on("connection", () => {
-      console.log("ROS Connected");
-      setIsConnected(true);
-    });
-
-    ros.on("error", (err) => {
-      console.error("ROS Error:", err);
-      setIsConnected(false);
-    });
-
-    ros.on("close", () => {
-      console.log("ROS Disconnected");
-      setIsConnected(false);
-    });
-
-    setRos(ros);
-    return () => ros.close();
-  }, []);
+  const [robotPos, setRobotPos] = useState<RobotPosition | null>(null);
+  const [markers, setMarkers] = useState<Marker[]>([]);
+  const { isConnected, getRos, robotNamespace, connectionStatus } = useRos();
 
   // Subscribe to odometry
   useEffect(() => {
-    if (!ros || !isConnected) return;
+    if (!isConnected) return;
 
+    const ros = getRos();
     const odom = new ROSLIB.Topic({
       ros: ros,
       name: "/walk_engine_odometry",
       messageType: "nav_msgs/Odometry",
     });
 
-    const callback = (msg) => {
+    const callback = (msg: any) => {
       const { position, orientation } = msg.pose.pose;
       const theta = Math.atan2(
         2 * (orientation.w * orientation.z + orientation.x * orientation.y),
@@ -61,10 +57,10 @@ export default function RobotMapWithHeading() {
 
     odom.subscribe(callback);
     return () => odom.unsubscribe();
-  }, [ros, isConnected]);
+  }, [isConnected, getRos]);
 
   // Convert radians to cardinal direction
-  const getCardinalDirection = (theta) => {
+  const getCardinalDirection = (theta: number) => {
     const degrees = theta * (180 / Math.PI);
     const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
     const index = Math.round((((degrees % 360) + 360) % 360) / 45) % 8;
@@ -89,7 +85,7 @@ export default function RobotMapWithHeading() {
   };
 
   // Remove marker
-  const removeMarker = (id) => {
+  const removeMarker = (id: number) => {
     setMarkers((prev) => prev.filter((m) => m.id !== id));
   };
 
@@ -117,22 +113,8 @@ export default function RobotMapWithHeading() {
                 </h1>
               </div>
 
-              <div
-                className={`px-4 py-2 rounded-full text-sm font-medium border ${
-                  isConnected
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-red-50 text-red-700 border-red-200"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      isConnected ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  ></div>
-                  {isConnected ? "ROS Connected" : "ROS Disconnected"}
-                </div>
-              </div>
+              {/* Connection Status Bar */}
+              <ConnectionStatusBar showFullControls={false} />
             </div>
 
             <div className="flex gap-3">

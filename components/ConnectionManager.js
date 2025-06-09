@@ -61,13 +61,8 @@ export default function ConnectionManager({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white border border-gray-200 shadow-xl rounded-lg p-8 max-w-lg w-full mx-4">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">
-          Connection Settings
-        </h2>
-
-        <form onSubmit={handleSubmit}>
+    <div>
+      <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label
               className="block text-gray-700 text-sm font-semibold mb-3"
@@ -211,7 +206,6 @@ export default function ConnectionManager({
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }
