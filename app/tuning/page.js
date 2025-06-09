@@ -13,7 +13,7 @@ import ConnectionManager from "@/components/ConnectionManager";
 import { useRos } from "@/contexts/RosContext";
 
 export default function Home() {
-  const { isConnected, getRos, robotNamespace, connectionStatus } = useRos();
+  const { isConnected, getRos, robotNamespace, connectionStatus, ensureConnection } = useRos();
   
   const [parameters, setParameters] = useState({});
   const [editingParam, setEditingParam] = useState(null);
@@ -36,6 +36,13 @@ export default function Home() {
 
   // Mock mode state
   const [mockMode, setMockMode] = useState(false);
+
+  // Ensure connection is maintained when component mounts
+  useEffect(() => {
+    if (ensureConnection) {
+      ensureConnection();
+    }
+  }, [ensureConnection]);
 
   // Mock data based on sample-param.yaml
   const mockParameters = {
@@ -284,7 +291,7 @@ export default function Home() {
               description: descriptor.description,
             };
           });
-          setParameterDescriptions(descriptions);
+          setParamDescriptions(descriptions);
         },
         (error) => {
           console.error("Error getting parameter descriptions:", error);
@@ -794,12 +801,14 @@ export default function Home() {
       return;
     }
 
-    handlePlayRobot(0, 0, 0);
+    // First, send the play command to prepare the robot
+    // handlePlayRobot(0, 0, 0);
 
+    // Publish kick command to the kick topic
     addLog(`Publishing kick command to /kick topic`, "websocket");
 
     const ros = getRos();
-    const cmdVel = new ROSLIB.Topic({
+    const kickTopic = new ROSLIB.Topic({
       ros: ros,
       name: "/kick",
       messageType: "std_msgs/msg/Bool",
@@ -809,10 +818,15 @@ export default function Home() {
       data: true,
     });
 
-    cmdVel.publish(kick);
+    kickTopic.publish(kick);
     addLog(`Published kick message to /kick`, "success", { data: true });
 
-    handleStopRobot();
+    // Wait for the kick action to complete before sending stop command
+    // This prevents the stop command from interfering with the kick
+    // setTimeout(() => {
+    //   handleStopRobot();
+    //   addLog(`Kick sequence completed, robot stopped`, "info");
+    // }, 500); // 500ms delay to allow kick action to complete
   };
 
   // Mock ROS functions
@@ -897,6 +911,11 @@ export default function Home() {
     setModalType("success");
     setModalMessage("Robot kick executed (Mock Mode)");
     setShowModal(true);
+    
+    // Simulate the same delay as the real kick function
+    setTimeout(() => {
+      console.log("Mock: Kick sequence completed");
+    }, 500);
   };
 
   // Toggle mock mode
@@ -946,32 +965,6 @@ export default function Home() {
                 </h1>
               </div>
 
-              <div
-                className={`px-4 py-2 rounded-full text-sm font-medium border ${
-                  connectionStatus === "connected"
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : connectionStatus === "error"
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : "bg-yellow-50 text-yellow-700 border-yellow-200"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      connectionStatus === "connected"
-                        ? "bg-green-500"
-                        : connectionStatus === "error"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                    }`}
-                  ></div>
-                  {connectionStatus === "connected"
-                    ? "Connected"
-                    : connectionStatus === "error"
-                    ? "Connection Error"
-                    : "Disconnected"}
-                </div>
-              </div>
             </div>
 
             <div className="flex gap-3">
@@ -1229,7 +1222,7 @@ export default function Home() {
               key={button.label}
               onClick={button.action}
               className={`${button.bgClass} w-28 h-16 rounded-lg font-medium text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg border border-gray-200`}
-              disabled={connectionStatus !== "connected"}
+              disabled={!isConnected}
               title={button.label}
             >
               <div className="flex flex-col items-center gap-1">
@@ -1252,7 +1245,6 @@ export default function Home() {
         <History
           isConnected={isConnected}
           getRos={getRos}
-          connectionStatus={connectionStatus}
           robotNamespace={robotNamespace}
           mockMode={mockMode}
           onRestore={() => {
@@ -1270,9 +1262,12 @@ export default function Home() {
         <HierarchicalParameters
           parameters={parameters}
           descriptions={paramDescriptions}
-          connectionStatus={connectionStatus}
+          isConnected={isConnected}
           handleEdit={handleEdit}
           handleSave={handleSave}
+          updateParameter={updateParameter}
+          mockUpdateParameter={mockUpdateParameter}
+          mockMode={mockMode}
           setNewValue={setNewValue}
           newValue={newValue}
           editingParam={editingParam}
@@ -1287,7 +1282,7 @@ export default function Home() {
         <button
           onClick={saveParameters}
           className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-lg font-semibold text-white border border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-          disabled={connectionStatus !== "connected" || isLoadingSave}
+          disabled={!isConnected || isLoadingSave}
         >
           <div className="flex items-center gap-3">
             {isLoadingSave ? (
