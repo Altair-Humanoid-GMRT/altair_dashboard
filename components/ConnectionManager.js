@@ -61,16 +61,16 @@ export default function ConnectionManager({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card rounded-2xl p-8 max-w-lg w-full mx-4">
-        <h2 className="text-2xl font-bold mb-6 text-contrast-high">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white border border-gray-200 shadow-xl rounded-lg p-8 max-w-lg w-full mx-4">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">
           Connection Settings
         </h2>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label
-              className="block text-contrast-medium text-sm font-semibold mb-3"
+              className="block text-gray-700 text-sm font-semibold mb-3"
               htmlFor="connectionUri"
             >
               WebSocket URI
@@ -80,18 +80,18 @@ export default function ConnectionManager({
               type="text"
               value={connectionUri}
               onChange={(e) => setConnectionUri(e.target.value)}
-              className="glass-input w-full p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200"
+              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               placeholder="ws://localhost:9090"
               required
             />
-            <p className="text-xs text-muted mt-2 glass-card rounded-lg p-2">
+            <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
               💡 Example: ws://localhost:9090
             </p>
           </div>
 
           <div className="mb-8">
             <label
-              className="block text-contrast-medium text-sm font-semibold mb-3"
+              className="block text-gray-700 text-sm font-semibold mb-3"
               htmlFor="robotNamespace"
             >
               Robot Namespace
@@ -101,11 +101,11 @@ export default function ConnectionManager({
               type="text"
               value={robotNamespace}
               onChange={(e) => setRobotNamespace(e.target.value)}
-              className="glass-input w-full p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200"
+              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               placeholder="/quintic_walk"
               required
             />
-            <p className="text-xs text-muted mt-2 glass-card rounded-lg p-2">
+            <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
               💡 Example: /quintic_walk
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function ConnectionManager({
             <button
               type="button"
               onClick={saveConnection}
-              className="glass-button bg-emerald-900/60 border-emerald-400/50 px-6 py-3 rounded-xl font-medium text-emerald-100 hover:bg-emerald-800/70 transition-all duration-300 hover:scale-105"
+              className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-medium text-white transition-all duration-300 border border-green-300"
             >
               <div className="flex items-center gap-2">
                 <svg
@@ -132,13 +132,13 @@ export default function ConnectionManager({
               <button
                 type="button"
                 onClick={onCancel}
-                className="glass-button bg-slate-700/60 border-slate-500/50 px-6 py-3 rounded-xl font-medium text-slate-100 hover:bg-slate-600/70 transition-all duration-300 hover:scale-105"
+                className="bg-gray-500 hover:bg-gray-600 px-6 py-3 rounded-lg font-medium text-white transition-all duration-300 border border-gray-300"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="glass-button bg-blue-900/60 border-blue-400/50 px-6 py-3 rounded-xl font-medium text-blue-100 hover:bg-blue-800/70 transition-all duration-300 hover:scale-105"
+                className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-medium text-white transition-all duration-300 border border-blue-300"
               >
                 <div className="flex items-center gap-2">
                   <svg
@@ -161,40 +161,40 @@ export default function ConnectionManager({
 
         {savedConnections.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-4 text-contrast-high">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900">
               Saved Connections
             </h3>
-            <div className="glass-table rounded-xl max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="bg-white border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
               {savedConnections.map((connection, index) => (
                 <div
                   key={connection.id}
-                  className={`glass-table-row flex justify-between items-center p-4 transition-all duration-200 ${
+                  className={`flex justify-between items-center p-4 transition-all duration-200 hover:bg-gray-50 ${
                     index !== savedConnections.length - 1
-                      ? "border-b border-slate-700/30"
+                      ? "border-b border-gray-200"
                       : ""
                   }`}
                 >
                   <div className="flex-1">
-                    <div className="font-semibold text-contrast-medium mb-1">
+                    <div className="font-semibold text-gray-700 mb-1">
                       {connection.name}
                     </div>
-                    <div className="text-xs text-blue-200 font-mono bg-blue-900/40 px-2 py-1 rounded border border-blue-500/40 mb-1">
+                    <div className="text-xs text-blue-700 font-mono bg-blue-50 px-2 py-1 rounded border border-blue-200 mb-1">
                       {connection.uri}
                     </div>
-                    <div className="text-xs text-purple-200 font-mono bg-purple-900/40 px-2 py-1 rounded border border-purple-500/40">
+                    <div className="text-xs text-purple-700 font-mono bg-purple-50 px-2 py-1 rounded border border-purple-200">
                       {connection.namespace}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 ml-4">
                     <button
                       onClick={() => loadConnection(connection)}
-                      className="glass-button bg-blue-900/60 hover:bg-blue-800/70 text-blue-100 px-4 py-2 rounded-lg text-sm transition-all duration-200 border border-blue-400/50"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200 border border-blue-300"
                     >
                       Load
                     </button>
                     <button
                       onClick={() => deleteConnection(connection.id)}
-                      className="glass-button bg-red-900/60 hover:bg-red-800/70 text-red-100 px-4 py-2 rounded-lg text-sm transition-all duration-200 border border-red-400/50"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200 border border-red-300"
                     >
                       Delete
                     </button>
@@ -204,7 +204,7 @@ export default function ConnectionManager({
             </div>
 
             {savedConnections.length === 0 && (
-              <div className="text-center py-8 text-muted">
+              <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-2">🔗</div>
                 <div>No saved connections yet</div>
               </div>

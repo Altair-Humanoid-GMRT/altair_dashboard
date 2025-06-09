@@ -1013,48 +1013,37 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen p-6 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl floating"></div>
-        <div
-          className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl floating"
-          style={{ animationDelay: "3s" }}
-        ></div>
-        <div
-          className="absolute top-3/4 left-3/4 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl floating"
-          style={{ animationDelay: "1.5s" }}
-        ></div>
-      </div>
+    <div className="min-h-screen p-6 bg-white">
+      {/* Removed animated background elements for white mode */}
 
       {/* Header */}
-      <header className="relative z-10 mb-8">
-        <div className="glass-card rounded-2xl p-6">
+      <header className="mb-8">
+        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-4">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold text-gray-900">
                   Altair Dashboard
                 </h1>
               </div>
 
               <div
-                className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm border transition-all duration-300 status-indicator ${
+                className={`px-4 py-2 rounded-full text-sm font-medium border ${
                   connectionStatus === "connected"
-                    ? "bg-emerald-500/20 text-emerald-100 border-emerald-400/30 glow-green"
+                    ? "bg-green-50 text-green-700 border-green-200"
                     : connectionStatus === "error"
-                    ? "bg-red-500/20 text-red-100 border-red-400/30 glow-red"
-                    : "bg-amber-500/20 text-amber-100 border-amber-400/30"
+                    ? "bg-red-50 text-red-700 border-red-200"
+                    : "bg-yellow-50 text-yellow-700 border-yellow-200"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <div
                     className={`w-2 h-2 rounded-full ${
                       connectionStatus === "connected"
-                        ? "bg-emerald-400"
+                        ? "bg-green-500"
                         : connectionStatus === "error"
-                        ? "bg-red-400"
-                        : "bg-amber-400"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
                     }`}
                   ></div>
                   {connectionStatus === "connected"
@@ -1070,10 +1059,10 @@ export default function Home() {
               {/* Mock Mode Toggle */}
               <button
                 onClick={toggleMockMode}
-                className={`glass-button px-6 py-3 rounded-xl font-medium text-white transition-all duration-300 ${
+                className={`px-6 py-3 rounded-lg font-medium border transition-colors ${
                   mockMode
-                    ? "bg-gradient-to-r from-orange-500/30 to-red-500/30 border-orange-400/40"
-                    : "border-gray-400/30"
+                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -1094,7 +1083,7 @@ export default function Home() {
 
               <button
                 onClick={() => setShowSettingsModal(true)}
-                className="glass-button px-6 py-3 rounded-xl font-medium text-white border-gray-400/30"
+                className="px-6 py-3 rounded-lg font-medium text-gray-700 border border-gray-200 bg-gray-50 hover:bg-gray-100"
               >
                 <div className="flex items-center gap-3">
                   <svg
@@ -1114,7 +1103,7 @@ export default function Home() {
 
               <button
                 onClick={handleRefresh}
-                className="glass-button px-6 py-3 rounded-xl font-medium text-white border-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-lg font-medium text-gray-700 border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={connectionStatus !== "connected"}
               >
                 <div className="flex items-center gap-3">
@@ -1138,29 +1127,29 @@ export default function Home() {
       </header>
 
       {/* Command Parameters with Logs */}
-      <div className="relative z-10 mb-8">
-        <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+      <div className="mb-8">
+        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">
             Command Parameters & Activity Logs
           </h2>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Command Parameters Table */}
-            <div className="glass-card rounded-xl p-6">
-              <h3 className="text-xl font-semibold mb-4 text-white/90">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-4 text-gray-900">
                 Control Parameters
               </h3>
-              <div className="overflow-hidden rounded-xl">
+              <div className="overflow-hidden rounded-lg border border-gray-200">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-white/10 backdrop-blur-sm">
-                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                    <tr className="bg-gray-100">
+                      <th className="text-left p-4 text-gray-700 font-semibold text-sm">
                         Parameter
                       </th>
-                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                      <th className="text-left p-4 text-gray-700 font-semibold text-sm">
                         Value
                       </th>
-                      <th className="text-left p-4 text-white/80 font-semibold text-sm">
+                      <th className="text-left p-4 text-gray-700 font-semibold text-sm">
                         Type
                       </th>
                     </tr>
@@ -1173,10 +1162,10 @@ export default function Home() {
                           <tr
                             key={paramName}
                             className={`${
-                              index % 2 === 0 ? "bg-white/5" : "bg-white/10"
-                            } hover:bg-white/20 transition-all duration-200 group`}
+                              index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            } hover:bg-gray-100 group`}
                           >
-                            <td className="p-4 text-white/90 font-medium">
+                            <td className="p-4 text-gray-900 font-medium">
                               {paramName}
                             </td>
                             <td className="p-4">
@@ -1193,12 +1182,12 @@ export default function Home() {
                                     handleCmdKeyPress(e, paramName)
                                   }
                                   onBlur={() => handleCmdBlur(paramName)}
-                                  className="w-full p-3 bg-white/20 backdrop-blur-sm border border-blue-400/50 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400"
+                                  className="w-full p-3 bg-white border border-blue-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                   placeholder="Press Enter to save, Escape to cancel"
                                 />
                               ) : (
                                 <div
-                                  className="font-mono bg-white/10 backdrop-blur-sm p-3 rounded-lg text-white cursor-pointer hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/40"
+                                  className="font-mono bg-gray-100 p-3 rounded-lg text-gray-900 cursor-pointer hover:bg-gray-200 border border-gray-200"
                                   onClick={() =>
                                     handleCmdSingleClick(paramName, paramValue)
                                   }
@@ -1208,7 +1197,7 @@ export default function Home() {
                                     <span>
                                       {paramValue?.toString() || "0.0"}
                                     </span>
-                                    <span className="text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                       ✏️
                                     </span>
                                   </div>
@@ -1216,7 +1205,7 @@ export default function Home() {
                               )}
                             </td>
                             <td className="p-4">
-                              <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-xs font-medium border border-purple-400/30">
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
                                 double
                               </span>
                             </td>
@@ -1227,29 +1216,29 @@ export default function Home() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 text-sm text-white/60 bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="mt-4 text-sm text-gray-600 bg-blue-50 rounded-lg p-3 border border-blue-200">
                 💡 Click on any value to edit it. Press Enter to save or Escape
                 to cancel.
               </div>
             </div>
 
             {/* Logs Panel */}
-            <div className="glass-card rounded-xl p-6">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-white/90">
+                <h3 className="text-xl font-semibold text-gray-900">
                   Activity Logs
                 </h3>
                 <button
                   onClick={clearLogs}
-                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg text-sm transition-all duration-200 border border-red-400/30"
+                  className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm border border-red-200"
                 >
                   Clear Logs
                 </button>
               </div>
 
-              <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 h-80 overflow-y-auto text-sm font-mono custom-scrollbar border border-white/10">
+              <div className="bg-white rounded-lg p-4 h-80 overflow-y-auto text-sm font-mono border border-gray-300">
                 {logs.length === 0 ? (
-                  <div className="text-white/40 text-center py-16">
+                  <div className="text-gray-400 text-center py-16">
                     <div className="text-2xl mb-2">📋</div>
                     <div>No logs yet. Perform actions to see logs here.</div>
                   </div>
@@ -1257,35 +1246,35 @@ export default function Home() {
                   logs.map((log) => (
                     <div
                       key={log.id}
-                      className="mb-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                      className="mb-3 p-2 rounded-lg hover:bg-gray-100"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-white/50 shrink-0 text-xs">
+                        <span className="text-gray-500 shrink-0 text-xs">
                           [{log.timestamp}]
                         </span>
                         <span
                           className={`shrink-0 text-xs font-bold px-2 py-1 rounded ${
                             log.type === "info"
-                              ? "bg-blue-500/20 text-blue-300"
+                              ? "bg-blue-100 text-blue-700"
                               : log.type === "success"
-                              ? "bg-emerald-500/20 text-emerald-300"
+                              ? "bg-green-100 text-green-700"
                               : log.type === "error"
-                              ? "bg-red-500/20 text-red-300"
+                              ? "bg-red-100 text-red-700"
                               : log.type === "warning"
-                              ? "bg-amber-500/20 text-amber-300"
+                              ? "bg-yellow-100 text-yellow-700"
                               : log.type === "websocket"
-                              ? "bg-purple-500/20 text-purple-300"
-                              : "bg-gray-500/20 text-gray-300"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-gray-100 text-gray-700"
                           }`}
                         >
                           {log.type.toUpperCase()}
                         </span>
-                        <span className="text-white/80 break-words flex-1">
+                        <span className="text-gray-700 break-words flex-1">
                           {log.message}
                         </span>
                       </div>
                       {log.details && (
-                        <div className="mt-2 ml-6 text-white/60 bg-white/5 rounded p-2 border border-white/10">
+                        <div className="mt-2 ml-6 text-gray-600 bg-gray-100 rounded p-2 border border-gray-300">
                           <pre className="text-xs whitespace-pre-wrap overflow-x-auto">
                             {JSON.stringify(log.details, null, 2)}
                           </pre>
@@ -1298,19 +1287,19 @@ export default function Home() {
 
               {/* Log Legend */}
               <div className="mt-4 text-xs">
-                <div className="text-white/70 font-medium mb-2">Log Types:</div>
+                <div className="text-gray-700 font-medium mb-2">Log Types:</div>
                 <div className="flex flex-wrap gap-3">
                   {[
                     { type: "info", color: "bg-blue-500", label: "INFO" },
                     {
                       type: "success",
-                      color: "bg-emerald-500",
+                      color: "bg-green-500",
                       label: "SUCCESS",
                     },
                     { type: "error", color: "bg-red-500", label: "ERROR" },
                     {
                       type: "warning",
-                      color: "bg-amber-500",
+                      color: "bg-yellow-500",
                       label: "WARNING",
                     },
                     {
@@ -1321,7 +1310,7 @@ export default function Home() {
                   ].map(({ type, color, label }) => (
                     <div key={type} className="flex items-center gap-2">
                       <div className={`w-3 h-3 ${color} rounded-full`}></div>
-                      <span className="text-white/60">{label}</span>
+                      <span className="text-gray-600">{label}</span>
                     </div>
                   ))}
                 </div>
@@ -1340,30 +1329,25 @@ export default function Home() {
                 handlePlayRobot(cmdParams.x, cmdParams.y, cmdParams.z),
               icon: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-4-4a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414l4-4a1 1 0 000-1.414z",
               label: "Play",
-              bgClass:
-                "from-emerald-500/30 to-green-600/30 border-emerald-400/40 glow-green",
-              hoverClass: "hover:from-emerald-400/40 hover:to-green-500/40",
+              bgClass: "bg-green-500 hover:bg-green-600",
             },
             {
               action: handleStopRobot,
               icon: "M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z",
               label: "Stop",
-              bgClass:
-                "from-red-500/30 to-red-600/30 border-red-400/40 glow-red",
-              hoverClass: "hover:from-red-400/40 hover:to-red-500/40",
+              bgClass: "bg-red-500 hover:bg-red-600",
             },
             {
               action: handleRobotKick,
               icon: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
               label: "Kick",
-              bgClass: "from-amber-500/30 to-orange-600/30 border-amber-400/40",
-              hoverClass: "hover:from-amber-400/40 hover:to-orange-500/40",
+              bgClass: "bg-orange-500 hover:bg-orange-600",
             },
           ].map((button, index) => (
             <button
               key={button.label}
               onClick={button.action}
-              className={`glass-button bg-gradient-to-r ${button.bgClass} ${button.hoverClass} w-28 h-16 rounded-2xl font-medium text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105`}
+              className={`${button.bgClass} w-28 h-16 rounded-lg font-medium text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg border border-gray-200`}
               disabled={connectionStatus !== "connected"}
               title={button.label}
             >
@@ -1400,7 +1384,7 @@ export default function Home() {
       </div>
 
       {/* Parameters */}
-      <div className="relative z-10">
+      <div className="">
         <HierarchicalParameters
           parameters={parameters}
           descriptions={paramDescriptions}
@@ -1417,10 +1401,10 @@ export default function Home() {
       </div>
 
       {/* Save Button */}
-      <div className="relative z-10 flex justify-center mb-8">
+      <div className="flex justify-center mb-8">
         <button
           onClick={saveParameters}
-          className="glass-button bg-gradient-to-r from-blue-500/30 to-purple-600/30 border-blue-400/40 px-8 py-4 rounded-2xl font-semibold text-white transition-all duration-300 disabled:opacity-50 hover:from-blue-400/40 hover:to-purple-500/40 transform hover:scale-105 glow-blue"
+          className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-lg font-semibold text-white border border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           disabled={connectionStatus !== "connected" || isLoadingSave}
         >
           <div className="flex items-center gap-3">
@@ -1448,22 +1432,16 @@ export default function Home() {
                 <span className="text-lg">Saving...</span>
               </>
             ) : (
-              ((
-                <>
-                  <svg
-                    className="h-6 w-6"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-                  </svg>
-                </>
-              ),
-              (
-                <span className="text-lg">
-                  Save Selected Parameters to File
-                </span>
-              ))
+              <>
+                <svg
+                  className="h-6 w-6"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                </svg>
+                <span className="text-lg">Save Selected Parameters to File</span>
+              </>
             )}
           </div>
         </button>
@@ -1471,26 +1449,26 @@ export default function Home() {
 
       {/* Modal for saving parameters status */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 border border-gray-200 shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h3
                 className={`text-xl font-bold ${
                   modalType === "success"
-                    ? "text-emerald-200"
+                    ? "text-green-700"
                     : modalType === "warning"
-                    ? "text-amber-200"
-                    : "text-red-200"
+                    ? "text-yellow-700"
+                    : "text-red-700"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       modalType === "success"
-                        ? "bg-emerald-500/20"
+                        ? "bg-green-100"
                         : modalType === "warning"
-                        ? "bg-amber-500/20"
-                        : "bg-red-500/20"
+                        ? "bg-yellow-100"
+                        : "bg-red-100"
                     }`}
                   >
                     {modalType === "success"
@@ -1508,7 +1486,7 @@ export default function Home() {
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-white/60 hover:text-white transition-colors p-1"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
                 <svg
                   className="h-6 w-6"
@@ -1526,18 +1504,18 @@ export default function Home() {
               </button>
             </div>
             <div className="mb-8">
-              <p className="text-white/80 leading-relaxed">{modalMessage}</p>
+              <p className="text-gray-700 leading-relaxed">{modalMessage}</p>
             </div>
             <div className="flex justify-end">
               <button
                 onClick={() => setShowModal(false)}
-                className={`glass-button px-6 py-3 rounded-xl text-white font-medium ${
+                className={`px-6 py-3 rounded-lg text-white font-medium ${
                   modalType === "success"
-                    ? "bg-emerald-500/20 border-emerald-400/30"
+                    ? "bg-green-600 hover:bg-green-700"
                     : modalType === "warning"
-                    ? "bg-amber-500/20 border-amber-400/30"
-                    : "bg-red-500/20 border-red-400/30"
-                }`}
+                    ? "bg-yellow-600 hover:bg-yellow-700"
+                    : "bg-red-600 hover:bg-red-700"
+                } transition-colors`}
               >
                 Close
               </button>

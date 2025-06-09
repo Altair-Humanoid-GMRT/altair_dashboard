@@ -140,14 +140,9 @@ export default function History({
     } else if (connectionStatus === "connected") {
       fetchHistoryFiles();
     }
-  }, [connectionStatus, robotNamespace, mockMode]);
+  }, [connectionStatus, mockMode]);
 
-  const fetchHistoryFiles = async () => {
-    if (mockMode) {
-      mockFetchHistoryFiles();
-      return;
-    }
-
+  const fetchHistoryFiles = () => {
     if (!rosRef.current || connectionStatus !== "connected") {
       setError("ROS connection not established");
       return;
@@ -156,80 +151,29 @@ export default function History({
     setLoading(true);
     setError(null);
 
-    const historyService = new ROSLIB.Service({
-      ros: rosRef.current,
-      name: "/param_manager/get_all_history_file",
-      serviceType: "std_srvs/srv/Trigger",
-    });
-
-    const request = new ROSLIB.ServiceRequest({});
-
-    historyService.callService(
-      request,
-      (response) => {
-        setLoading(false);
-
-        if (response.success) {
-          try {
-            const files = JSON.parse(response.message);
-            setHistoryFiles(files);
-          } catch (e) {
-            setError(`Error parsing history files: ${e.message}`);
-          }
-        } else {
-          setError(`Failed to fetch history files: ${response.message}`);
-        }
-      },
-      (error) => {
-        setLoading(false);
-        setError(`Service call failed: ${error}`);
-      }
-    );
-  };
-
-  const loadParameterFile = (filePath) => {
-    if (mockMode) {
-      mockLoadParameterFile(filePath);
-      return;
-    }
-
-    if (!rosRef.current || connectionStatus !== "connected") {
-      setError("ROS connection not established");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    // First publish the file path
-    const fileTopic = new ROSLIB.Topic({
-      ros: rosRef.current,
-      name: "/param_manager/file_path",
-      messageType: "std_msgs/msg/String",
-    });
-
-    fileTopic.publish(new ROSLIB.Message({ data: filePath }));
-
-    // Then call the service
     setTimeout(() => {
-      const loadService = new ROSLIB.Service({
+      const historyService = new ROSLIB.Service({
         ros: rosRef.current,
-        name: "/param_manager/load_parameters_from_file",
+        name: "/param_manager/get_history_files",
         serviceType: "std_srvs/srv/Trigger",
       });
 
       const request = new ROSLIB.ServiceRequest({});
 
-      loadService.callService(
+      historyService.callService(
         request,
         (response) => {
           setLoading(false);
-
           if (response.success) {
-            onRestore();
-            onRefresh();
+            try {
+              const files = JSON.parse(response.message);
+              setHistoryFiles(files);
+            } catch (error) {
+              console.error("Error parsing history files:", error);
+              setError("Error parsing history files");
+            }
           } else {
-            setError(`Failed to load parameters: ${response.message}`);
+            setError(response.message || "Failed to fetch history files");
           }
         },
         (error) => {
@@ -237,7 +181,7 @@ export default function History({
           setError(`Service call failed: ${error}`);
         }
       );
-    }, 500); // Give time for the topic to be received
+    }, 300);
   };
 
   const previewFile = (file) => {
@@ -264,7 +208,6 @@ export default function History({
 
     fileTopic.publish(new ROSLIB.Message({ data: file.path }));
 
-    // Then call the service
     setTimeout(() => {
       const previewService = new ROSLIB.Service({
         ros: rosRef.current,
@@ -278,16 +221,16 @@ export default function History({
         request,
         (response) => {
           setLoading(false);
-
           if (response.success) {
             try {
               const params = JSON.parse(response.message);
               setPreviewParams(params);
-            } catch (e) {
-              setError(`Error parsing parameters: ${e.message}`);
+            } catch (error) {
+              console.error("Error parsing parameters:", error);
+              setError("Error parsing parameters");
             }
           } else {
-            setError(`Failed to preview parameters: ${response.message}`);
+            setError(response.message || "Failed to preview file");
           }
         },
         (error) => {
@@ -296,6 +239,56 @@ export default function History({
         }
       );
     }, 500);
+  };
+
+  const loadParameterFile = (filePath) => {
+    if (mockMode) {
+      mockLoadParameterFile(filePath);
+      return;
+    }
+
+    if (!rosRef.current || connectionStatus !== "connected") {
+      setError("ROS connection not established");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    setTimeout(() => {
+      const fileTopic = new ROSLIB.Topic({
+        ros: rosRef.current,
+        name: "/param_manager/file_path",
+        messageType: "std_msgs/msg/String",
+      });
+
+      fileTopic.publish(new ROSLIB.Message({ data: filePath }));
+
+      const loadService = new ROSLIB.Service({
+        ros: rosRef.current,
+        name: "/param_manager/load_file_parameters",
+        serviceType: "std_srvs/srv/Trigger",
+      });
+
+      const request = new ROSLIB.ServiceRequest({});
+
+      loadService.callService(
+        request,
+        (response) => {
+          setLoading(false);
+          if (response.success) {
+            onRestore();
+            onRefresh();
+          } else {
+            setError(response.message || "Failed to load parameters");
+          }
+        },
+        (error) => {
+          setLoading(false);
+          setError(`Service call failed: ${error}`);
+        }
+      );
+    }, 300);
   };
 
   const deleteFile = (file) => {
@@ -312,19 +305,18 @@ export default function History({
     setLoading(true);
     setError(null);
 
-    const deleteTopic = new ROSLIB.Topic({
-      ros: rosRef.current,
-      name: "/param_manager/file_path_delete",
-      messageType: "std_msgs/msg/String",
-    });
-
-    deleteTopic.publish(new ROSLIB.Message({ data: file.path }));
-
-    // Refresh the file list
     setTimeout(() => {
+      const fileTopic = new ROSLIB.Topic({
+        ros: rosRef.current,
+        name: "/param_manager/file_path",
+        messageType: "std_msgs/msg/String",
+      });
+
+      fileTopic.publish(new ROSLIB.Message({ data: file.path }));
+
       const deleteService = new ROSLIB.Service({
         ros: rosRef.current,
-        name: "/param_manager/delete_parameter_file",
+        name: "/param_manager/delete_file",
         serviceType: "std_srvs/srv/Trigger",
       });
 
@@ -334,9 +326,9 @@ export default function History({
         request,
         (response) => {
           setLoading(false);
-
           if (response.success) {
-            fetchHistoryFiles();
+            // Remove from local state
+            setHistoryFiles((prev) => prev.filter((f) => f.path !== file.path));
             if (selectedFile?.path === file.path) {
               setSelectedFile(null);
               setPreviewParams(null);
@@ -346,7 +338,7 @@ export default function History({
               setCompareParams(null);
             }
           } else {
-            setError(`Failed to delete file: ${response.message}`);
+            setError(response.message || "Failed to delete file");
           }
         },
         (error) => {
@@ -403,18 +395,16 @@ export default function History({
         request,
         (response) => {
           setLoading(false);
-
           if (response.success) {
             try {
               const params = JSON.parse(response.message);
               setCompareParams(params);
-            } catch (e) {
-              setError(`Error parsing parameters: ${e.message}`);
+            } catch (error) {
+              console.error("Error parsing parameters:", error);
+              setError("Error parsing comparison parameters");
             }
           } else {
-            setError(
-              `Failed to load comparison parameters: ${response.message}`
-            );
+            setError(response.message || "Failed to load comparison file");
           }
         },
         (error) => {
@@ -427,28 +417,28 @@ export default function History({
 
   // Recursive function to compare nested parameters
   const compareNestedParams = (params1, params2, prefix = "") => {
+    const result = [];
+
+    // Get all keys from both objects
     const allKeys = new Set([
       ...Object.keys(params1 || {}),
       ...Object.keys(params2 || {}),
     ]);
-
-    let result = [];
 
     for (const key of allKeys) {
       const fullKey = prefix ? `${prefix}.${key}` : key;
       const val1 = params1?.[key];
       const val2 = params2?.[key];
 
-      // If both are objects, go deeper
       if (
         typeof val1 === "object" &&
-        typeof val2 === "object" &&
         val1 !== null &&
-        val2 !== null &&
         !Array.isArray(val1) &&
+        typeof val2 === "object" &&
+        val2 !== null &&
         !Array.isArray(val2)
       ) {
-        result = [...result, ...compareNestedParams(val1, val2, fullKey)];
+        result.push(...compareNestedParams(val1, val2, fullKey));
       } else {
         // Convert to string for comparison
         const strVal1 = JSON.stringify(val1);
@@ -472,41 +462,41 @@ export default function History({
 
   const renderFileList = () => {
     return (
-      <div className="glass-table overflow-hidden rounded-xl">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="glass-table-header">
-              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
+            <tr className="bg-gray-100 border-b border-gray-200">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                 Filename
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                 Modified
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-contrast-high uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/30">
+          <tbody className="divide-y divide-gray-200">
             {historyFiles.map((file, index) => (
               <tr
                 key={index}
-                className={`glass-table-row ${
+                className={`hover:bg-gray-50 ${
                   selectedFile?.path === file.path
-                    ? "!bg-blue-900/40 border-l-4 border-blue-400"
+                    ? "bg-blue-50 border-l-4 border-blue-500"
                     : ""
                 }`}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-contrast-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {file.filename}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-contrast-low">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                   {file.modified}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
                     onClick={() => previewFile(file)}
-                    className="glass-button bg-blue-900/60 hover:bg-blue-800/70 text-blue-100 px-4 py-2 rounded-lg transition-all duration-200 border border-blue-500/50 hover:border-blue-400/70"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
                   >
                     Preview
                   </button>
@@ -515,14 +505,14 @@ export default function History({
                     selectedFile.path !== file.path && (
                       <button
                         onClick={() => selectForComparison(file)}
-                        className="glass-button bg-purple-900/60 hover:bg-purple-800/70 text-purple-100 px-4 py-2 rounded-lg transition-all duration-200 border border-purple-500/50 hover:border-purple-400/70"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
                       >
                         Compare
                       </button>
                     )}
                   <button
                     onClick={() => loadParameterFile(file.path)}
-                    className="glass-button bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-100 px-4 py-2 rounded-lg transition-all duration-200 border border-emerald-500/50 hover:border-emerald-400/70"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
                   >
                     Restore
                   </button>
@@ -531,7 +521,7 @@ export default function History({
                       setSelectedFileToDelete(file);
                       setDeleteModal(true);
                     }}
-                    className="glass-button bg-red-900/60 hover:bg-red-800/70 text-red-100 px-4 py-2 rounded-lg transition-all duration-200 border border-red-500/50 hover:border-red-400/70"
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
                   >
                     Delete
                   </button>
@@ -561,25 +551,25 @@ export default function History({
     });
 
     return (
-      <div className="mt-6 glass-card rounded-xl p-6">
-        <h3 className="text-xl font-semibold mb-4 text-contrast-high">
+      <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-xl font-semibold mb-4 text-gray-900">
           Parameter Comparison
         </h3>
 
-        <div className="grid grid-cols-3 gap-4 mb-4 font-semibold glass-table-header p-4 rounded-lg">
-          <div className="text-contrast-medium">Parameter</div>
-          <div className="text-blue-300">
+        <div className="grid grid-cols-3 gap-4 mb-4 font-semibold bg-gray-100 p-4 rounded-lg">
+          <div className="text-gray-700">Parameter</div>
+          <div className="text-blue-700">
             {selectedFile?.filename} (Selected)
           </div>
-          <div className="text-purple-300">
+          <div className="text-purple-700">
             {compareFile?.filename} (Compare)
           </div>
         </div>
 
-        <div className="overflow-auto max-h-[400px] custom-scrollbar">
+        <div className="overflow-auto max-h-[400px]">
           {Object.entries(groupedResults).map(([topLevel, params]) => (
             <div key={topLevel} className="mb-4">
-              <h4 className="font-bold text-contrast-medium mb-2 glass-table-header p-3 rounded-lg">
+              <h4 className="font-bold text-gray-700 mb-2 bg-gray-100 p-3 rounded-lg">
                 {topLevel}
               </h4>
 
@@ -594,43 +584,43 @@ export default function History({
                     key={index}
                     className={`grid grid-cols-3 gap-4 py-3 px-3 rounded-lg mb-2 transition-all duration-200 ${
                       isDifferent
-                        ? "bg-amber-900/30 border border-amber-500/40"
-                        : "glass-table-row"
+                        ? "bg-yellow-50 border border-yellow-300"
+                        : "bg-gray-50"
                     }`}
                   >
-                    <div className="font-mono text-sm break-all text-contrast-medium">
+                    <div className="font-mono text-sm break-all text-gray-700">
                       {displayKey}
                     </div>
                     <div
                       className={`break-all ${
-                        isDifferent ? "text-blue-200" : "text-contrast-low"
+                        isDifferent ? "text-blue-700" : "text-gray-600"
                       }`}
                     >
                       {param.value1 === undefined ? (
-                        <span className="text-muted">undefined</span>
+                        <span className="text-gray-400">undefined</span>
                       ) : typeof param.value1 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap bg-slate-900/40 p-3 rounded border border-slate-600/30">
+                        <pre className="text-xs whitespace-pre-wrap bg-gray-100 p-3 rounded border border-gray-200">
                           {JSON.stringify(param.value1, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40">
+                        <span className="font-mono text-sm bg-gray-200 px-3 py-1 rounded border border-gray-300">
                           {String(param.value1)}
                         </span>
                       )}
                     </div>
                     <div
                       className={`break-all ${
-                        isDifferent ? "text-purple-200" : "text-contrast-low"
+                        isDifferent ? "text-purple-700" : "text-gray-600"
                       }`}
                     >
                       {param.value2 === undefined ? (
-                        <span className="text-muted">undefined</span>
+                        <span className="text-gray-400">undefined</span>
                       ) : typeof param.value2 === "object" ? (
-                        <pre className="text-xs whitespace-pre-wrap bg-slate-900/40 p-3 rounded border border-slate-600/30">
+                        <pre className="text-xs whitespace-pre-wrap bg-gray-100 p-3 rounded border border-gray-200">
                           {JSON.stringify(param.value2, null, 2)}
                         </pre>
                       ) : (
-                        <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40">
+                        <span className="font-mono text-sm bg-gray-200 px-3 py-1 rounded border border-gray-300">
                           {String(param.value2)}
                         </span>
                       )}
@@ -647,15 +637,15 @@ export default function History({
 
   const renderParameterValue = (value, level = 0) => {
     if (value === null || value === undefined) {
-      return <span className="text-muted">null</span>;
+      return <span className="text-gray-400">null</span>;
     }
 
     if (typeof value === "object" && !Array.isArray(value)) {
       return (
-        <div className="pl-4 border-l border-slate-600/40">
+        <div className="pl-4 border-l border-gray-200">
           {Object.entries(value).map(([k, v]) => (
             <div key={k} className="py-1">
-              <span className="font-medium text-contrast-medium">{k}: </span>
+              <span className="font-medium text-gray-700">{k}: </span>
               {renderParameterValue(v, level + 1)}
             </div>
           ))}
@@ -665,7 +655,7 @@ export default function History({
 
     if (Array.isArray(value)) {
       return (
-        <div className="font-mono text-sm bg-slate-800/50 p-3 rounded border border-slate-600/40 text-contrast-medium">
+        <div className="font-mono text-sm bg-gray-100 p-3 rounded border border-gray-200 text-gray-700">
           [
           {value.map((item, i) => (
             <span key={i} className="ml-2">
@@ -681,7 +671,7 @@ export default function History({
     }
 
     return (
-      <span className="font-mono text-sm bg-slate-800/50 px-3 py-1 rounded border border-slate-600/40 text-contrast-medium">
+      <span className="font-mono text-sm bg-gray-100 px-3 py-1 rounded border border-gray-200 text-gray-700">
         {value.toString()}
       </span>
     );
@@ -691,17 +681,17 @@ export default function History({
     if (!previewParams) return null;
 
     return (
-      <div className="mt-6 glass-card rounded-xl p-6">
-        <h3 className="text-xl font-semibold mb-4 text-contrast-high">
+      <div className="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+        <h3 className="text-xl font-semibold mb-4 text-gray-900">
           Parameter Preview
         </h3>
-        <div className="overflow-auto max-h-[400px] custom-scrollbar">
+        <div className="overflow-auto max-h-[400px]">
           {Object.entries(previewParams).map(([key, value]) => (
             <div
               key={key}
-              className="py-3 border-b border-slate-700/30 last:border-b-0"
+              className="py-3 border-b border-gray-200 last:border-b-0"
             >
-              <div className="font-medium text-contrast-medium mb-2">{key}</div>
+              <div className="font-medium text-gray-700 mb-2">{key}</div>
               <div className="ml-4">{renderParameterValue(value)}</div>
             </div>
           ))}
@@ -711,18 +701,18 @@ export default function History({
   };
 
   return (
-    <div className="mb-8 glass-card rounded-2xl p-8">
+    <div className="mb-8 bg-white border border-gray-200 shadow-sm rounded-lg p-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-contrast-high">
+        <h2 className="text-3xl font-bold text-gray-900">
           Parameter History
         </h2>
         <div className="flex space-x-3">
           <button
             onClick={toggleCompareMode}
-            className={`glass-button px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 ${
+            className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
               compareMode
-                ? "bg-purple-800/60 border-purple-400/60 text-purple-100 hover:bg-purple-700/70"
-                : "bg-blue-800/60 border-blue-400/60 text-blue-100 hover:bg-blue-700/70"
+                ? "bg-purple-600 hover:bg-purple-700 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -734,7 +724,7 @@ export default function History({
           </button>
           <button
             onClick={fetchHistoryFiles}
-            className="glass-button bg-slate-700/60 border-slate-500/60 px-6 py-3 rounded-xl font-medium text-slate-100 hover:bg-slate-600/70 transition-all duration-300 hover:scale-105"
+            className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg font-medium text-white transition-all duration-300"
           >
             <div className="flex items-center gap-2">
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -751,10 +741,10 @@ export default function History({
       </div>
 
       {error && (
-        <div className="bg-red-900/60 border border-red-500/60 text-red-100 px-6 py-4 rounded-xl mb-6 backdrop-blur-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
           <div className="flex items-center gap-3">
             <svg
-              className="h-5 w-5 text-red-300"
+              className="h-5 w-5 text-red-500"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -772,14 +762,14 @@ export default function History({
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <div className="relative">
-            <div className="w-16 h-16 border-4 border-slate-600/30 rounded-full"></div>
-            <div className="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+            <div className="w-16 h-16 border-4 border-gray-300 rounded-full"></div>
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
           </div>
         </div>
       ) : historyFiles.length === 0 ? (
-        <div className="text-center py-16 text-muted">
+        <div className="text-center py-16 text-gray-500">
           <div className="text-6xl mb-4">📂</div>
-          <div className="text-xl mb-2 text-contrast-medium">
+          <div className="text-xl mb-2 text-gray-700">
             No history files found
           </div>
           <div>Parameter configurations will appear here when saved</div>
@@ -795,12 +785,12 @@ export default function History({
       )}
 
       {deleteModal && selectedFileToDelete && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-red-200">
+              <h3 className="text-xl font-bold text-red-700">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-900/40 border border-red-500/50">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-100 border border-red-200">
                     ⚠️
                   </div>
                   Confirm Delete
@@ -808,7 +798,7 @@ export default function History({
               </h3>
               <button
                 onClick={() => setDeleteModal(false)}
-                className="text-muted hover:text-contrast-medium transition-colors p-1"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
                 <svg
                   className="h-6 w-6"
@@ -826,9 +816,9 @@ export default function History({
               </button>
             </div>
             <div className="mb-8">
-              <p className="text-contrast-medium leading-relaxed">
+              <p className="text-gray-700 leading-relaxed">
                 Are you sure you want to delete &quot;
-                <span className="font-semibold text-contrast-high">
+                <span className="font-semibold text-gray-900">
                   {selectedFileToDelete.filename}
                 </span>
                 &quot;? This action cannot be undone.
@@ -836,13 +826,13 @@ export default function History({
             </div>
             <div className="flex justify-end gap-3">
               <button
-                className="glass-button px-6 py-3 rounded-xl text-slate-100 font-medium bg-slate-700/60 border-slate-500/60 hover:bg-slate-600/70"
+                className="px-6 py-3 rounded-lg text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 border border-gray-300"
                 onClick={() => setDeleteModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="glass-button px-6 py-3 rounded-xl text-red-100 font-medium bg-red-900/60 border-red-500/60 hover:bg-red-800/70"
+                className="px-6 py-3 rounded-lg text-white font-medium bg-red-600 hover:bg-red-700"
                 onClick={() => {
                   confirmDelete(selectedFileToDelete);
                   setDeleteModal(false);
