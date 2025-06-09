@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import ROSLIB from "roslib";
 
 export default function History({
-  rosRef,
-  connectionStatus,
+  isConnected,
+  getRos,
   robotNamespace,
   onRestore,
   onRefresh,
@@ -137,13 +137,13 @@ export default function History({
   useEffect(() => {
     if (mockMode) {
       mockFetchHistoryFiles();
-    } else if (connectionStatus === "connected") {
+    } else if (isConnected) {
       fetchHistoryFiles();
     }
-  }, [connectionStatus, mockMode]);
+  }, [isConnected, mockMode]);
 
   const fetchHistoryFiles = () => {
-    if (!rosRef.current || connectionStatus !== "connected") {
+    if (!isConnected || !getRos()) {
       setError("ROS connection not established");
       return;
     }
@@ -153,7 +153,7 @@ export default function History({
 
     setTimeout(() => {
       const historyService = new ROSLIB.Service({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/get_history_files",
         serviceType: "std_srvs/srv/Trigger",
       });
@@ -190,7 +190,7 @@ export default function History({
       return;
     }
 
-    if (!rosRef.current || connectionStatus !== "connected") {
+    if (!isConnected || !getRos()) {
       setError("ROS connection not established");
       return;
     }
@@ -201,7 +201,7 @@ export default function History({
 
     // First publish the file path
     const fileTopic = new ROSLIB.Topic({
-      ros: rosRef.current,
+      ros: getRos(),
       name: "/param_manager/file_path_preview",
       messageType: "std_msgs/msg/String",
     });
@@ -210,7 +210,7 @@ export default function History({
 
     setTimeout(() => {
       const previewService = new ROSLIB.Service({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/get_parameters_from_file",
         serviceType: "std_srvs/srv/Trigger",
       });
@@ -247,7 +247,7 @@ export default function History({
       return;
     }
 
-    if (!rosRef.current || connectionStatus !== "connected") {
+    if (!isConnected || !getRos()) {
       setError("ROS connection not established");
       return;
     }
@@ -257,7 +257,7 @@ export default function History({
 
     setTimeout(() => {
       const fileTopic = new ROSLIB.Topic({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/file_path",
         messageType: "std_msgs/msg/String",
       });
@@ -265,7 +265,7 @@ export default function History({
       fileTopic.publish(new ROSLIB.Message({ data: filePath }));
 
       const loadService = new ROSLIB.Service({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/load_file_parameters",
         serviceType: "std_srvs/srv/Trigger",
       });
@@ -297,7 +297,7 @@ export default function History({
       return;
     }
 
-    if (!rosRef.current || connectionStatus !== "connected") {
+    if (!isConnected || !getRos()) {
       setError("ROS connection not established");
       return;
     }
@@ -307,7 +307,7 @@ export default function History({
 
     setTimeout(() => {
       const fileTopic = new ROSLIB.Topic({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/file_path",
         messageType: "std_msgs/msg/String",
       });
@@ -315,7 +315,7 @@ export default function History({
       fileTopic.publish(new ROSLIB.Message({ data: file.path }));
 
       const deleteService = new ROSLIB.Service({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/delete_file",
         serviceType: "std_srvs/srv/Trigger",
       });
@@ -363,7 +363,7 @@ export default function History({
       return;
     }
 
-    if (!rosRef.current || connectionStatus !== "connected") {
+    if (!isConnected || !getRos()) {
       setError("ROS connection not established");
       return;
     }
@@ -374,7 +374,7 @@ export default function History({
 
     // First publish the file path
     const fileTopic = new ROSLIB.Topic({
-      ros: rosRef.current,
+      ros: getRos(),
       name: "/param_manager/file_path_preview",
       messageType: "std_msgs/msg/String",
     });
@@ -384,7 +384,7 @@ export default function History({
     // Then call the service
     setTimeout(() => {
       const compareService = new ROSLIB.Service({
-        ros: rosRef.current,
+        ros: getRos(),
         name: "/param_manager/get_parameters_from_file",
         serviceType: "std_srvs/srv/Trigger",
       });

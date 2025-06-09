@@ -8,7 +8,10 @@ const HierarchicalParameters = ({
   setNewValue,
   handleEdit,
   handleSave,
-  connectionStatus,
+  updateParameter,
+  mockUpdateParameter,
+  mockMode,
+  isConnected,
   selectedParams,
   onSelectionChange,
   onSelectAll,
@@ -29,7 +32,7 @@ const HierarchicalParameters = ({
 
   // Handle single-click to edit
   const handleSingleClick = (paramName, currentValue) => {
-    if (connectionStatus !== "connected") return;
+    if (!isConnected) return;
     setLocalEditingParam(paramName);
     setLocalNewValue(currentValue?.toString() || "");
   };
@@ -46,12 +49,12 @@ const HierarchicalParameters = ({
   // Handle save
   const handleSaveLocal = (paramName) => {
     if (localNewValue !== "") {
-      // Use the parent's update function
-      handleEdit(paramName, parameters[paramName]?.value);
-      setNewValue(localNewValue);
-      setTimeout(() => {
-        handleSave();
-      }, 0);
+      // Call the appropriate update function directly
+      if (mockMode) {
+        mockUpdateParameter(paramName, localNewValue);
+      } else {
+        updateParameter(paramName, localNewValue);
+      }
     }
     setLocalEditingParam(null);
     setLocalNewValue("");
@@ -241,7 +244,7 @@ const HierarchicalParameters = ({
                           : "unknown"}
                       </span>
                     </div>
-                    {connectionStatus === "connected" && (
+                    {isConnected && (
                       <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to edit
                       </div>
@@ -267,7 +270,7 @@ const HierarchicalParameters = ({
                           handleSingleClick(value.fullName, value.data.value)
                         }
                         title={
-                          connectionStatus === "connected"
+                          isConnected
                             ? "Click to edit"
                             : "Connect to ROS to edit"
                         }
@@ -276,7 +279,7 @@ const HierarchicalParameters = ({
                           <span>
                             {value.data.value?.toString() || "undefined"}
                           </span>
-                          {connectionStatus === "connected" && (
+                          {isConnected && (
                             <span className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
                               ✏️
                             </span>
@@ -345,7 +348,7 @@ const HierarchicalParameters = ({
                           : "unknown"}
                       </span>
                     </div>
-                    {connectionStatus === "connected" && (
+                    {isConnected && (
                       <div className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to edit
                       </div>
@@ -371,7 +374,7 @@ const HierarchicalParameters = ({
                           handleSingleClick(paramName, paramData.value)
                         }
                         title={
-                          connectionStatus === "connected"
+                          isConnected
                             ? "Click to edit"
                             : "Connect to ROS to edit"
                         }
@@ -380,7 +383,7 @@ const HierarchicalParameters = ({
                           <span>
                             {paramData.value?.toString() || "undefined"}
                           </span>
-                          {connectionStatus === "connected" && (
+                          {isConnected && (
                             <span className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
                               ✏️
                             </span>
