@@ -10,7 +10,7 @@ interface TouchPosition {
 }
 
 export default function VirtualGamepad() {
-  const { isConnected, getRos, robotNamespace, connectionStatus } = useRos();
+  const { isConnected, getRos, robotNamespace, connectionStatus, ensureConnection } = useRos();
   
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -35,11 +35,21 @@ export default function VirtualGamepad() {
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Track if joysticks have been touched to prevent initial cmd_vel sending
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const cmdVelRef = useRef<ROSLIB.Topic | null>(null);
   const kickRef = useRef<ROSLIB.Topic | null>(null);
   const leftJoystickRef = useRef<HTMLDivElement>(null);
   const rightJoystickRef = useRef<HTMLDivElement>(null);
+
+  // Ensure connection is maintained when component mounts
+  useEffect(() => {
+    if (ensureConnection) {
+      ensureConnection();
+    }
+  }, [ensureConnection]);
 
   // Initialize ROS topics when connected
   useEffect(() => {
@@ -155,9 +165,14 @@ export default function VirtualGamepad() {
       theta: Math.max(-valueCaps.theta, Math.min(valueCaps.theta, processedRightX * -valueCaps.theta))   // Rotation (clockwise is negative) with cap
     };
 
+    // Always update control values for display
     setControlValues(newControlValues);
-    sendTwist(newControlValues.x, newControlValues.y, newControlValues.theta);
-  }, [leftJoystick, rightJoystick, sendTwist, valueCaps]);
+    
+    // Only send cmd_vel after user has interacted with joysticks
+    if (hasInteracted) {
+      sendTwist(newControlValues.x, newControlValues.y, newControlValues.theta);
+    }
+  }, [leftJoystick, rightJoystick, sendTwist, valueCaps, hasInteracted]);
 
   // Get relative position within joystick area
   const getRelativePosition = (element: HTMLElement, clientX: number, clientY: number): TouchPosition => {
@@ -199,6 +214,8 @@ export default function VirtualGamepad() {
     // For touch events, only handle the first touch to prevent multiple touch conflicts
     if ('touches' in e && e.touches.length > 1) return;
     
+    // Mark that user has interacted with joysticks
+    setHasInteracted(true);
     setIsDraggingLeft(true);
     
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -239,6 +256,8 @@ export default function VirtualGamepad() {
     // For touch events, only handle the first touch to prevent multiple touch conflicts
     if ('touches' in e && e.touches.length > 1) return;
     
+    // Mark that user has interacted with joysticks
+    setHasInteracted(true);
     setIsDraggingRight(true);
     
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
@@ -365,7 +384,7 @@ export default function VirtualGamepad() {
 
       {/* Settings Modal - Only for control limits */}
       {showSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[75] p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Control Limits</h3>
@@ -443,9 +462,12 @@ export default function VirtualGamepad() {
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 mt-2">
         <div className="bg-black bg-opacity-80 text-white px-3 py-2 rounded-lg">
           <div className="flex gap-3 text-xs">
-        <span>X: {controlValues.x.toFixed(2)}</span>
-        <span>Y: {controlValues.y.toFixed(2)}</span>
-        <span>θ: {controlValues.theta.toFixed(2)}</span>
+            <span>X: {hasInteracted ? controlValues.x.toFixed(2) : '0.00'}</span>
+            <span>Y: {hasInteracted ? controlValues.y.toFixed(2) : '0.00'}</span>
+            <span>θ: {hasInteracted ? controlValues.theta.toFixed(2) : '0.00'}</span>
+            {!hasInteracted && (
+              <span className="text-gray-400 ml-2">(Touch joysticks to activate)</span>
+            )}
           </div>
         </div>
       </div>
@@ -517,7 +539,10 @@ export default function VirtualGamepad() {
             <div className="flex space-x-4">
               {/* KICK Button */}
               <button
-                onClick={sendKick}
+                onClick={() => {
+                  setHasInteracted(true);
+                  sendKick();
+                }}
                 disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
@@ -529,7 +554,10 @@ export default function VirtualGamepad() {
               
               {/* STOP Button */}
               <button
-                onClick={() => stopHandler()}
+                onClick={() => {
+                  setHasInteracted(true);
+                  stopHandler();
+                }}
                 disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
@@ -541,7 +569,10 @@ export default function VirtualGamepad() {
 
               {/* WALK IN SPOT Button */}
               <button
-                onClick={() => sendTwist(0, 0, 0)}
+                onClick={() => {
+                  setHasInteracted(true);
+                  sendTwist(0, 0, 0);
+                }}
                 disabled={!isConnected}
                 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-full font-bold text-white shadow-lg border border-white transition-all duration-200 hover:scale-105"
               >
