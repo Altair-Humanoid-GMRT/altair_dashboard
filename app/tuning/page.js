@@ -37,12 +37,136 @@ export default function Home() {
   // Mock mode state
   const [mockMode, setMockMode] = useState(false);
 
+  // Timer state
+  const [timer, setTimer] = useState(0); // Timer in seconds
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerMode, setTimerMode] = useState('stopwatch'); // 'stopwatch' or 'countdown'
+  const [countdownStartValue, setCountdownStartValue] = useState(300); // 5 minutes default
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const [showTimerNotification, setShowTimerNotification] = useState(false);
+  const [enableSound, setEnableSound] = useState(true);
+
   // Ensure connection is maintained when component mounts
   useEffect(() => {
     if (ensureConnection) {
       ensureConnection();
     }
   }, [ensureConnection]);
+
+  // Request notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          addLog('Browser notifications enabled for timer', 'info');
+        } else {
+          addLog('Browser notifications denied - timer will use visual notifications only', 'warning');
+        }
+      });
+    }
+  }, []);
+
+  // Timer effect
+  useEffect(() => {
+    let interval = null;
+    
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setTimer(prevTimer => {
+          if (timerMode === 'countdown') {
+            if (prevTimer <= 1) {
+              setIsTimerRunning(false);
+              // Timer finished - show notification
+              addLog('Timer finished!', 'warning');
+              setShowTimerNotification(true);
+              
+              // Play notification sound if enabled
+              if (enableSound) {
+                // Create audio context and play a beep sound
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 1);
+              }
+              
+              // Browser notification if permission granted
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Timer Finished!', {
+                  body: 'Your countdown timer has reached zero.',
+                  icon: '/favicon.ico',
+                  tag: 'timer-notification'
+                });
+              }
+              
+              return 0;
+            }
+            return prevTimer - 1;
+          } else {
+            // Stopwatch mode
+            return prevTimer + 1;
+          }
+        });
+      }, 1000);
+    } else if (!isTimerRunning && timer !== 0) {
+      clearInterval(interval);
+    }
+    
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timer, timerMode, enableSound]);
+
+  // Format timer display
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Timer control functions
+  const startTimer = () => {
+    if (timerMode === 'countdown' && timer === 0) {
+      setTimer(countdownStartValue);
+    }
+    setIsTimerRunning(true);
+    addLog(`Timer started (${timerMode} mode)`, 'info');
+  };
+
+  const pauseTimer = () => {
+    setIsTimerRunning(false);
+    addLog('Timer paused', 'info');
+  };
+
+  const resetTimer = () => {
+    setIsTimerRunning(false);
+    setTimer(timerMode === 'countdown' ? countdownStartValue : 0);
+    addLog('Timer reset', 'info');
+  };
+
+  const switchTimerMode = (mode) => {
+    setTimerMode(mode);
+    setIsTimerRunning(false);
+    if (mode === 'countdown') {
+      setTimer(countdownStartValue);
+    } else {
+      setTimer(0);
+    }
+    addLog(`Timer mode switched to ${mode}`, 'info');
+  };
 
   // Mock data based on sample-param.yaml
   const mockParameters = {
@@ -968,6 +1092,71 @@ export default function Home() {
             </div>
 
             <div className="flex gap-3">
+              {/* Timer Display and Controls */}
+              <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-6 py-3">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="h-5 w-5 text-gray-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span className={`text-lg font-mono font-bold ${
+                    timerMode === 'countdown' && timer <= 60 && timer > 0 ? 'text-red-600' : 'text-gray-900'
+                  }`}>
+                    {formatTime(timer)}
+                  </span>
+                  <span className="text-xs text-gray-500 uppercase">
+                    {timerMode}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1 ml-2">
+                  {!isTimerRunning ? (
+                    <button
+                      onClick={startTimer}
+                      className="p-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
+                      title="Start Timer"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={pauseTimer}
+                      className="p-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg transition-colors"
+                      title="Pause Timer"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={resetTimer}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                    title="Reset Timer"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowTimerModal(true)}
+                    className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                    title="Timer Settings"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
               {/* Mock Mode Toggle */}
               <button
                 onClick={toggleMockMode}
@@ -1323,6 +1512,304 @@ export default function Home() {
           </div>
         </button>
       </div>
+
+      {/* Timer Finished Notification */}
+      {showTimerNotification && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 border border-gray-200 shadow-xl animate-pulse">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-orange-700">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-orange-100 animate-bounce">
+                    <svg className="h-5 w-5 text-orange-700" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Timer Finished!
+                </div>
+              </h3>
+              <button
+                onClick={() => setShowTimerNotification(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-8">
+              <div className="text-center">
+                <div className="text-6xl mb-4">⏰</div>
+                <p className="text-gray-700 leading-relaxed text-lg font-medium">
+                  Your countdown timer has finished!
+                </p>
+                <p className="text-gray-600 text-sm mt-2">
+                  Time to check your robot parameters or take your next action.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => {
+                  setShowTimerNotification(false);
+                  resetTimer();
+                }}
+                className="px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Start New Timer
+              </button>
+              <button
+                onClick={() => setShowTimerNotification(false)}
+                className="px-6 py-3 rounded-lg text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Timer Settings Modal */}
+      {showTimerModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 border border-gray-200 shadow-xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100">
+                    <svg className="h-5 w-5 text-blue-700" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  Timer Settings
+                </div>
+              </h3>
+              <button
+                onClick={() => setShowTimerModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Timer Mode Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Timer Mode
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => switchTimerMode('stopwatch')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      timerMode === 'stopwatch'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">Stopwatch</span>
+                      <span className="text-xs text-center">Count up from 00:00</span>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => switchTimerMode('countdown')}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      timerMode === 'countdown'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">Countdown</span>
+                      <span className="text-xs text-center">Count down to 00:00</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Countdown Settings */}
+              {timerMode === 'countdown' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Countdown Duration
+                  </label>
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {[
+                      { label: '1 min', value: 60 },
+                      { label: '5 min', value: 300 },
+                      { label: '10 min', value: 600 },
+                      { label: '15 min', value: 900 },
+                      { label: '30 min', value: 1800 },
+                      { label: '60 min', value: 3600 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.value}
+                        onClick={() => {
+                          setCountdownStartValue(preset.value);
+                          if (!isTimerRunning) {
+                            setTimer(preset.value);
+                          }
+                        }}
+                        className={`p-3 rounded-lg border transition-all ${
+                          countdownStartValue === preset.value
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="text-sm font-medium">{preset.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600">Custom:</span>
+                    <input
+                      type="number"
+                      value={Math.floor(countdownStartValue / 60)}
+                      onChange={(e) => {
+                        const minutes = parseInt(e.target.value) || 0;
+                        const newValue = minutes * 60;
+                        setCountdownStartValue(newValue);
+                        if (!isTimerRunning) {
+                          setTimer(newValue);
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Minutes"
+                      min="1"
+                      max="1440"
+                    />
+                    <span className="text-sm text-gray-600">minutes</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Timer Status */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-2">Current Timer</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-mono font-bold text-gray-900">
+                    {formatTime(timer)}
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    isTimerRunning
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {isTimerRunning ? 'Running' : 'Stopped'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Notification Settings */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Notification Settings
+                </label>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <svg className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-1.929 5.657 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12c0-2.21-.895-4.21-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 12a5.983 5.983 0 01-.757 2.829 1 1 0 01-1.415-1.414A3.987 3.987 0 0013 12a3.987 3.987 0 00-.172-1.415 1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">Sound notification</span>
+                    </div>
+                    <button
+                      onClick={() => setEnableSound(!enableSound)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        enableSound ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          enableSound ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <svg className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 2L3 7v11c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V7l-7-5zM10 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
+                      </svg>
+                      <span className="text-sm text-gray-700">Browser notification</span>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      Notification?.permission === 'granted'
+                        ? 'bg-green-100 text-green-700'
+                        : Notification?.permission === 'denied'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {Notification?.permission === 'granted' ? 'Enabled' :
+                       Notification?.permission === 'denied' ? 'Denied' : 'Not requested'}
+                    </span>
+                  </div>
+                  
+                  {Notification?.permission !== 'granted' && Notification?.permission !== 'denied' && (
+                    <button
+                      onClick={() => {
+                        Notification.requestPermission().then(permission => {
+                          if (permission === 'granted') {
+                            addLog('Browser notifications enabled for timer', 'success');
+                          } else {
+                            addLog('Browser notifications denied', 'warning');
+                          }
+                        });
+                      }}
+                      className="w-full mt-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm border border-blue-200 transition-colors"
+                    >
+                      Enable Browser Notifications
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowTimerModal(false)}
+                className="px-6 py-3 rounded-lg text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for saving parameters status */}
       {showModal && (
