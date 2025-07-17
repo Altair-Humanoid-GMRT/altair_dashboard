@@ -59,9 +59,10 @@ export default function HeadModule() {
 
 
 
-  // Use refs for roll and pitch topics, only create/advertise once, reuse for publishing
+  // Use refs for roll, pitch, and search mode topics, only create/advertise once, reuse for publishing
   const rollTopicRef = useRef<ROSLIB.Topic | null>(null);
   const pitchTopicRef = useRef<ROSLIB.Topic | null>(null);
+  const searchModeTopicRef = useRef<ROSLIB.Topic | null>(null);
 
   // Initialize topics when connected
   useEffect(() => {
@@ -73,6 +74,10 @@ export default function HeadModule() {
       if (pitchTopicRef.current) {
         pitchTopicRef.current.unadvertise();
         pitchTopicRef.current = null;
+      }
+      if (searchModeTopicRef.current) {
+        searchModeTopicRef.current.unadvertise();
+        searchModeTopicRef.current = null;
       }
       return;
     }
@@ -88,8 +93,14 @@ export default function HeadModule() {
       name: `/${robotNamespace || ""}/head_controller/pitch`,
       messageType: "std_msgs/msg/Int8",
     });
+    searchModeTopicRef.current = new ROSLIB.Topic({
+      ros: ros,
+      name: `/${robotNamespace || ""}/head_controller/search_mode`,
+      messageType: "std_msgs/msg/String",
+    });
     rollTopicRef.current.advertise();
     pitchTopicRef.current.advertise();
+    searchModeTopicRef.current.advertise();
     return () => {
       if (rollTopicRef.current) {
         rollTopicRef.current.unadvertise();
@@ -99,9 +110,20 @@ export default function HeadModule() {
         pitchTopicRef.current.unadvertise();
         pitchTopicRef.current = null;
       }
+      if (searchModeTopicRef.current) {
+        searchModeTopicRef.current.unadvertise();
+        searchModeTopicRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, robotNamespace, getRos]);
+  // Handler to send search mode
+  const handleSearchMode = (mode: string) => {
+    if (!isConnected || !searchModeTopicRef.current) return;
+    const msg = new ROSLIB.Message({ data: mode });
+    searchModeTopicRef.current.publish(msg);
+    console.log('[HeadModule] Sent search mode:', mode);
+  };
 
   // Publish roll and pitch values every 1 second
   useEffect(() => {
@@ -193,6 +215,36 @@ export default function HeadModule() {
       </header>
       <ConnectionStatusBar showFullControls={false} />
       <div className="max-w-xl mx-auto mt-12 bg-white border border-gray-200 shadow-sm rounded-lg p-8">
+        {/* Search Mode Buttons */}
+        <div className="mb-10 flex flex-col items-center">
+          <label className="block text-lg font-semibold text-gray-900 mb-4">Search Mode</label>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <button
+              onClick={() => handleSearchMode('swing')}
+              className="px-5 py-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold border border-blue-300 shadow-sm transition-colors"
+            >
+              Swing
+            </button>
+            <button
+              onClick={() => handleSearchMode('sweep')}
+              className="px-5 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-800 font-semibold border border-green-300 shadow-sm transition-colors"
+            >
+              Sweep
+            </button>
+            <button
+              onClick={() => handleSearchMode('square')}
+              className="px-5 py-2 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold border border-yellow-300 shadow-sm transition-colors"
+            >
+              Square
+            </button>
+            <button
+              onClick={() => handleSearchMode('nod')}
+              className="px-5 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold border border-purple-300 shadow-sm transition-colors"
+            >
+              Nod
+            </button>
+          </div>
+        </div>
         <div className="mb-10">
           <label className="block text-lg font-semibold text-gray-900 mb-4">Roll / Pan</label>
           <input
