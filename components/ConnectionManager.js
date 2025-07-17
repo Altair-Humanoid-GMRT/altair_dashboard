@@ -97,11 +97,11 @@ export default function ConnectionManager({
               value={robotNamespace}
               onChange={(e) => setRobotNamespace(e.target.value)}
               className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-              placeholder="/quintic_walk"
+              placeholder="altair01"
               required
             />
             <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
-              💡 Example: /quintic_walk
+              💡 Example: altair01
             </p>
           </div>
 

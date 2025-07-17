@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Gamepad2, Map, Sliders, BookOpen } from 'lucide-react';
+import { Gamepad2, Map, Sliders, BookOpen, Eye } from 'lucide-react';
 import { useRos } from '../contexts/RosContext';
 import ConnectionStatusBar from '../components/ConnectionStatusBar';
 
@@ -23,6 +23,14 @@ export default function Dashboard() {
       href: '/tuning',
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600'
+    },
+    {
+      title: 'Head Module',
+      description: 'Control head pan/tilt and override mode',
+      icon: <Eye className="w-8 h-8" />, // Eye icon for head/vision
+      href: '/head_module',
+      color: 'bg-yellow-500',
+      hoverColor: 'hover:bg-yellow-600'
     },
     {
       title: 'Map Visualization',
