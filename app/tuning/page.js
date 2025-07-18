@@ -13,7 +13,7 @@ import ConnectionManager from "@/components/ConnectionManager";
 import { useRos } from "@/contexts/RosContext";
 
 export default function Home() {
-  const { isConnected, getRos, robotNamespace, connectionStatus, ensureConnection } = useRos();
+  const { isConnected, getRos, robotNamespace, walkPackage, setWalkPackage, connectionStatus, ensureConnection } = useRos();
   
   const [parameters, setParameters] = useState({});
   const [editingParam, setEditingParam] = useState(null);
@@ -360,7 +360,7 @@ export default function Home() {
 
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: `${robotNamespace}/get_parameters`,
+        name: `${robotNamespace}/${walkPackage}/get_parameters`,
         serviceType: "rcl_interfaces/srv/GetParameters",
       });
 
@@ -386,7 +386,7 @@ export default function Home() {
         }
       );
     },
-    [isConnected, robotNamespace, getRos]
+    [isConnected, robotNamespace, walkPackage, getRos]
   );
 
   const getParameterDescriptions = useCallback(
@@ -398,7 +398,7 @@ export default function Home() {
 
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: `${robotNamespace}/describe_parameters`,
+        name: `${robotNamespace}/${walkPackage}/describe_parameters`,
         serviceType: "rcl_interfaces/srv/DescribeParameters",
       });
 
@@ -422,7 +422,7 @@ export default function Home() {
         }
       );
     },
-    [isConnected, robotNamespace, getRos]
+    [isConnected, robotNamespace, walkPackage, getRos]
   );
 
   // Function to fetch all parameters
@@ -435,7 +435,7 @@ export default function Home() {
 
     const paramClient = new ROSLIB.Service({
       ros: ros,
-      name: `${robotNamespace}/list_parameters`,
+      name: `${robotNamespace}/${walkPackage}/list_parameters`,
       serviceType: "rcl_interfaces/srv/ListParameters",
     });
 
@@ -455,7 +455,7 @@ export default function Home() {
         setShowModal(true);
       }
     );
-  }, [isConnected, robotNamespace, getRos, getParameterValues, getParameterDescriptions]);
+  }, [isConnected, robotNamespace, walkPackage, getRos, getParameterValues, getParameterDescriptions]);
 
   const fetchROSParameters = useCallback(() => {
     const ros = getRos();
@@ -520,7 +520,7 @@ export default function Home() {
 
     const paramClient = new ROSLIB.Service({
       ros: ros,
-      name: `${robotNamespace}/set_parameters`,
+      name: `${robotNamespace}/${walkPackage}/set_parameters`,
       serviceType: "rcl_interfaces/srv/SetParameters",
     });
 
@@ -638,7 +638,7 @@ export default function Home() {
     // First publish the parameter list to save
     const paramListTopic = new ROSLIB.Topic({
       ros: ros,
-      name: "/param_manager/params_to_save",
+      name: `/${robotNamespace}/param_manager/params_to_save`,
       messageType: "std_msgs/String",
     });
 
@@ -648,7 +648,7 @@ export default function Home() {
     setTimeout(() => {
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: "/param_manager/save_parameters",
+        name: `/${robotNamespace}/param_manager/save_parameters`,
         serviceType: "std_srvs/srv/Trigger",
       });
 
@@ -833,12 +833,12 @@ export default function Home() {
     }
 
     console.log("Sending cmd_vel", { x, y, z });
-    addLog(`Publishing to /cmd_vel topic`, "websocket");
+    addLog(`Publishing to /${robotNamespace}/cmd_vel topic`, "websocket");
 
     const ros = getRos();
     const cmdVel = new ROSLIB.Topic({
       ros: ros,
-      name: "/cmd_vel",
+      name: `/${robotNamespace}/cmd_vel`,
       messageType: "geometry_msgs/Twist",
     });
 
@@ -856,7 +856,7 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
-    addLog(`Published twist message to /cmd_vel`, "success", {
+    addLog(`Published twist message to /${robotNamespace}/cmd_vel`, "success", {
       linear: { x, y, z: 0.0 },
       angular: { x: 0.0, y: 0.0, z },
     });
@@ -879,12 +879,12 @@ export default function Home() {
       return;
     }
 
-    addLog(`Publishing stop command to /cmd_vel`, "websocket");
+    addLog(`Publishing stop command to /${robotNamespace}/cmd_vel`, "websocket");
 
     const ros = getRos();
     const cmdVel = new ROSLIB.Topic({
       ros: ros,
-      name: "/cmd_vel",
+      name: `/${robotNamespace}/cmd_vel`,
       messageType: "geometry_msgs/Twist",
     });
 
@@ -902,7 +902,7 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
-    addLog(`Published stop message to /cmd_vel`, "success", {
+    addLog(`Published stop message to /${robotNamespace}/cmd_vel`, "success", {
       linear: { x: 0.0, y: 0.0, z: 0.0 },
       angular: { x: -1.0, y: 0.0, z: 0.0 },
     });
@@ -929,12 +929,12 @@ export default function Home() {
     // handlePlayRobot(0, 0, 0);
 
     // Publish kick command to the kick topic
-    addLog(`Publishing kick command to /kick topic`, "websocket");
+    addLog(`Publishing kick command to /${robotNamespace}/kick topic`, "websocket");
 
     const ros = getRos();
     const kickTopic = new ROSLIB.Topic({
       ros: ros,
-      name: "/kick",
+      name: `/${robotNamespace}/kick`,
       messageType: "std_msgs/msg/Bool",
     });
 
@@ -943,7 +943,7 @@ export default function Home() {
     });
 
     kickTopic.publish(kick);
-    addLog(`Published kick message to /kick`, "success", { data: true });
+    addLog(`Published kick message to /${robotNamespace}/kick`, "success", { data: true });
 
     // Wait for the kick action to complete before sending stop command
     // This prevents the stop command from interfering with the kick

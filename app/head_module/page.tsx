@@ -40,7 +40,7 @@ export default function HeadModule() {
       const ros = getRos();
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: "/head_controller/get_parameters",
+        name: `/${robotNamespace}/head_controller/get_parameters`,
         serviceType: "rcl_interfaces/srv/GetParameters",
       });
       const request = new ROSLIB.ServiceRequest({
@@ -78,7 +78,7 @@ export default function HeadModule() {
       const ros = getRos();
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: "/head_controller/set_parameters",
+        name: `/${robotNamespace}/head_controller/set_parameters`,
         serviceType: "rcl_interfaces/srv/SetParameters",
       });
       const parameter = new ROSLIB.Message({
@@ -106,7 +106,7 @@ export default function HeadModule() {
       const ros = getRos();
       const paramClient = new ROSLIB.Service({
         ros: ros,
-        name: "/head_controller/set_parameters",
+        name: `/${robotNamespace}/head_controller/set_parameters`,
         serviceType: "rcl_interfaces/srv/SetParameters",
       });
       const parameter = new ROSLIB.Message({

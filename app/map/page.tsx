@@ -42,7 +42,7 @@ export default function RobotMapWithHeading() {
     const ros = getRos();
     const odom = new ROSLIB.Topic({
       ros: ros,
-      name: "/walk_engine_odometry",
+      name: `/${robotNamespace}/walk_engine_odometry`,
       messageType: "nav_msgs/Odometry",
     });
 

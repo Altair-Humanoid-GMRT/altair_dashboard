@@ -64,14 +64,14 @@ export default function VirtualGamepad() {
     // Initialize cmd_vel topic
     cmdVelRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: "/cmd_vel",
+      name: `/${robotNamespace}/cmd_vel`,
       messageType: "geometry_msgs/Twist",
     });
 
     // Initialize kick topic
     kickRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: "/kick",
+      name: `/${robotNamespace}/kick`,
       messageType: "std_msgs/Bool",
     });
   }, [isConnected, getRos]);

@@ -3,11 +3,13 @@ import React, { useState, useEffect } from "react";
 export default function ConnectionManager({
   currentUri,
   currentNamespace,
+  currentWalkPackage,
   onApply,
   onCancel,
 }) {
   const [connectionUri, setConnectionUri] = useState(currentUri);
   const [robotNamespace, setRobotNamespace] = useState(currentNamespace);
+  const [walkPackage, setWalkPackage] = useState(currentWalkPackage || 'quintic_walk');
   const [savedConnections, setSavedConnections] = useState([]);
 
   // Load saved connections from localStorage
@@ -25,7 +27,7 @@ export default function ConnectionManager({
   const saveConnection = () => {
     // Check if this connection already exists
     const existingIndex = savedConnections.findIndex(
-      (conn) => conn.uri === connectionUri && conn.namespace === robotNamespace
+      (conn) => conn.uri === connectionUri && conn.namespace === robotNamespace && conn.walkPackage === walkPackage
     );
 
     if (existingIndex >= 0) {
@@ -36,6 +38,7 @@ export default function ConnectionManager({
       id: Date.now(),
       uri: connectionUri,
       namespace: robotNamespace,
+      walkPackage: walkPackage,
       name: `Connection ${savedConnections.length + 1}`,
     };
 
@@ -53,11 +56,14 @@ export default function ConnectionManager({
   const loadConnection = (connection) => {
     setConnectionUri(connection.uri);
     setRobotNamespace(connection.namespace);
+    if (connection.walkPackage) {
+      setWalkPackage(connection.walkPackage);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onApply(connectionUri, robotNamespace);
+    onApply(connectionUri, robotNamespace, walkPackage);
   };
 
   return (
@@ -84,7 +90,7 @@ export default function ConnectionManager({
             </p>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6">
             <label
               className="block text-gray-700 text-sm font-semibold mb-3"
               htmlFor="robotNamespace"
@@ -102,6 +108,27 @@ export default function ConnectionManager({
             />
             <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
               💡 Example: altair01
+            </p>
+          </div>
+
+          <div className="mb-8">
+            <label
+              className="block text-gray-700 text-sm font-semibold mb-3"
+              htmlFor="walkPackage"
+            >
+              Walk Package
+            </label>
+            <input
+              id="walkPackage"
+              type="text"
+              value={walkPackage}
+              onChange={(e) => setWalkPackage(e.target.value)}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              placeholder="quintic_walk"
+              required
+            />
+            <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
+              💡 ROS package name for walking parameters (e.g., quintic_walk)
             </p>
           </div>
 
@@ -176,8 +203,11 @@ export default function ConnectionManager({
                     <div className="text-xs text-blue-700 font-mono bg-blue-50 px-2 py-1 rounded border border-blue-200 mb-1">
                       {connection.uri}
                     </div>
-                    <div className="text-xs text-purple-700 font-mono bg-purple-50 px-2 py-1 rounded border border-purple-200">
+                    <div className="text-xs text-purple-700 font-mono bg-purple-50 px-2 py-1 rounded border border-purple-200 mb-1">
                       {connection.namespace}
+                    </div>
+                    <div className="text-xs text-green-700 font-mono bg-green-50 px-2 py-1 rounded border border-green-200">
+                      {connection.walkPackage || 'quintic_walk'}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 ml-4">

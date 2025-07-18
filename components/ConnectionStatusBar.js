@@ -10,6 +10,7 @@ export default function ConnectionStatusBar({ showFullControls = false }) {
     isConnected,
     connectionUri,
     robotNamespace,
+    walkPackage,
     connectionStatus,
     isConnecting,
     lastError,
@@ -22,8 +23,8 @@ export default function ConnectionStatusBar({ showFullControls = false }) {
 
   const [showConnectionManager, setShowConnectionManager] = useState(false);
 
-  const handleConnectionApply = (uri, namespace) => {
-    updateConnection(uri, namespace);
+  const handleConnectionApply = (uri, namespace, walkPkg) => {
+    updateConnection(uri, namespace, walkPkg);
     setShowConnectionManager(false);
   };
 
@@ -273,6 +274,7 @@ export default function ConnectionStatusBar({ showFullControls = false }) {
               <ConnectionManager
                 currentUri={connectionUri}
                 currentNamespace={robotNamespace}
+                currentWalkPackage={walkPackage}
                 onApply={handleConnectionApply}
                 onCancel={() => setShowConnectionManager(false)}
               />
