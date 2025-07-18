@@ -45,7 +45,7 @@ export default function HeadModule() {
         serviceType: "rcl_interfaces/srv/SetParameters",
       });
       const parameter = new ROSLIB.Message({
-        name: "manual_control",
+        name: "override_control",
         value: { type: 1, bool_value: value },
       });
       const request = new ROSLIB.ServiceRequest({
