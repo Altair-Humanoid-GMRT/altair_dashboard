@@ -24,9 +24,74 @@ interface Marker {
 
 export default function HeadModule() {
   const { isConnected, getRos, robotNamespace, ensureConnection } = useRos();
-  const [roll, setRoll] = useState(0); // -80 to 80
-  const [pitch, setPitch] = useState(0); // 0 to 90
+  const [roll, setRoll] = useState(0);
+  const [pitch, setPitch] = useState(0);
   const [override, setOverride] = useState(false);
+  // Dynamic limits for roll and pitch
+  const [rollMax, setRollMax] = useState<string>("80");
+  const [rollMin, setRollMin] = useState<string>("-80");
+  const [pitchMax, setPitchMax] = useState<string>("60");
+  const [pitchMin, setPitchMin] = useState<string>("-60");
+
+  // Read limits from ROS2 params on mount/connection
+  useEffect(() => {
+    if (!isConnected) return;
+    try {
+      const ros = getRos();
+      const paramClient = new ROSLIB.Service({
+        ros: ros,
+        name: "/head_controller/get_parameters",
+        serviceType: "rcl_interfaces/srv/GetParameters",
+      });
+      const request = new ROSLIB.ServiceRequest({
+        names: [
+          "limit.roll_max",
+          "limit.roll_min",
+          "limit.pitch_max",
+          "limit.pitch_min",
+        ],
+      });
+      paramClient.callService(request, (result) => {
+        // result.values is an array of parameter values
+        if (result && result.values && Array.isArray(result.values)) {
+        result.values.forEach((param: any, idx: number) => {
+          // param.double_value is the value
+          if (typeof param.double_value === "number") {
+            switch (idx) {
+              case 0: setRollMax(String(param.double_value)); break;
+              case 1: setRollMin(String(param.double_value)); break;
+              case 2: setPitchMax(String(param.double_value)); break;
+              case 3: setPitchMin(String(param.double_value)); break;
+            }
+          }
+        });
+        }
+      }, () => {});
+    } catch (e) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
+
+  // Set parameter helper
+  const setLimitParam = (paramName: string, value: number) => {
+    if (!isConnected) return;
+    try {
+      const ros = getRos();
+      const paramClient = new ROSLIB.Service({
+        ros: ros,
+        name: "/head_controller/set_parameters",
+        serviceType: "rcl_interfaces/srv/SetParameters",
+      });
+      const parameter = new ROSLIB.Message({
+        name: paramName,
+        value: { type: 3, double_value: value },
+      });
+      const request = new ROSLIB.ServiceRequest({
+        parameters: [parameter],
+      });
+      paramClient.callService(request, () => {}, () => {});
+    } catch (e) {}
+  };
+  const [showSettings, setShowSettings] = useState(false);
 
   // Ensure connection is maintained when component mounts
   useEffect(() => {
@@ -215,6 +280,95 @@ export default function HeadModule() {
       </header>
       <ConnectionStatusBar showFullControls={false} />
       <div className="max-w-xl mx-auto mt-12 bg-white border border-gray-200 shadow-sm rounded-lg p-8">
+        {/* Settings Section */}
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => setShowSettings((prev) => !prev)}
+            className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold border border-gray-300 shadow-sm transition-colors"
+          >
+            {showSettings ? 'Close Settings' : 'Open Settings'}
+          </button>
+        </div>
+        {showSettings && (
+          <div className="mb-10 p-4 border border-gray-300 rounded-lg bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Head Limits Settings</h3>
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Roll Max (°)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  step="any"
+                  value={rollMax}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setRollMax(val);
+                    const v = Number(val);
+                    if (!isNaN(v) && val !== "-") {
+                      setLimitParam("limit.roll_max", v);
+                    }
+                  }}
+                  className="w-full border rounded px-2 py-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Roll Min (°)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  step="any"
+                  value={rollMin}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setRollMin(val);
+                    const v = Number(val);
+                    if (!isNaN(v) && val !== "-") {
+                      setLimitParam("limit.roll_min", v);
+                    }
+                  }}
+                  className="w-full border rounded px-2 py-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Max (°)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  step="any"
+                  value={pitchMax}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPitchMax(val);
+                    const v = Number(val);
+                    if (!isNaN(v) && val !== "-") {
+                      setLimitParam("limit.pitch_max", v);
+                    }
+                  }}
+                  className="w-full border rounded px-2 py-1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Min (°)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  step="any"
+                  value={pitchMin}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPitchMin(val);
+                    const v = Number(val);
+                    if (!isNaN(v) && val !== "-") {
+                      setLimitParam("limit.pitch_min", v);
+                    }
+                  }}
+                  className="w-full border rounded px-2 py-1"
+                />
+              </div>
+            </div>
+            <div className="text-xs text-gray-500 mt-2">These limits affect the range of the sliders below.</div>
+          </div>
+        )}
         {/* Search Mode Buttons */}
         <div className="mb-10 flex flex-col items-center">
           <label className="block text-lg font-semibold text-gray-900 mb-4">Search Mode</label>
@@ -249,32 +403,32 @@ export default function HeadModule() {
           <label className="block text-lg font-semibold text-gray-900 mb-4">Roll / Pan</label>
           <input
             type="range"
-            min={-80}
-            max={80}
+            min={Number(rollMin)}
+            max={Number(rollMax)}
             value={roll}
             onChange={e => handleRollChange(Number(e.target.value))}
             className="w-full accent-blue-600"
           />
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>-80°</span>
+            <span>{rollMin}°</span>
             <span>{roll}°</span>
-            <span>80°</span>
+            <span>{rollMax}°</span>
           </div>
         </div>
         <div className="mb-10">
           <label className="block text-lg font-semibold text-gray-900 mb-4">Pitch / Tilt</label>
           <input
             type="range"
-            min={-60}
-            max={60}
+            min={Number(pitchMin)}
+            max={Number(pitchMax)}
             value={pitch}
             onChange={e => handlePitchChange(Number(e.target.value))}
             className="w-full accent-green-600"
           />
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>-60°</span>
+            <span>{pitchMin}°</span>
             <span>{pitch}°</span>
-            <span>60°</span>
+            <span>{pitchMax}°</span>
           </div>
         </div>
         <div className="flex justify-center mt-8">
