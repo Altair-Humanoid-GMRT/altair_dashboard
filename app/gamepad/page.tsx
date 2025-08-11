@@ -61,20 +61,28 @@ export default function VirtualGamepad() {
 
     const ros = getRos();
     
+    // Helper function to format topic paths correctly
+    const getTopicPath = (topic: string): string => {
+      if (!robotNamespace || robotNamespace === '') {
+        return `/${topic}`;
+      }
+      return `/${robotNamespace}/${topic}`;
+    };
+    
     // Initialize cmd_vel topic
     cmdVelRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/cmd_vel`,
+      name: getTopicPath('cmd_vel'),
       messageType: "geometry_msgs/Twist",
     });
 
     // Initialize kick topic
     kickRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/kick`,
+      name: getTopicPath('kick'),
       messageType: "std_msgs/Bool",
     });
-  }, [isConnected, getRos]);
+  }, [isConnected, getRos, robotNamespace]);
 
   // Send twist message
   const sendTwist = useCallback((x: number, y: number, theta: number) => {

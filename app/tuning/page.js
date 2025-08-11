@@ -815,6 +815,14 @@ export default function Home() {
     );
   };
 
+  // Helper function to format topic paths correctly
+  const getTopicPath = (topic) => {
+    if (!robotNamespace || robotNamespace === '') {
+      return `/${topic}`;
+    }
+    return `/${robotNamespace}/${topic}`;
+  };
+
   const handlePlayRobot = (x, y, z) => {
     addLog(`Robot command: Play (x:${x}, y:${y}, z:${z})`, "info");
 
@@ -832,13 +840,14 @@ export default function Home() {
       return;
     }
 
+    const topicPath = getTopicPath('cmd_vel');
     console.log("Sending cmd_vel", { x, y, z });
-    addLog(`Publishing to /${robotNamespace}/cmd_vel topic`, "websocket");
+    addLog(`Publishing to ${topicPath} topic`, "websocket");
 
     const ros = getRos();
     const cmdVel = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/cmd_vel`,
+      name: topicPath,
       messageType: "geometry_msgs/Twist",
     });
 
@@ -856,7 +865,7 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
-    addLog(`Published twist message to /${robotNamespace}/cmd_vel`, "success", {
+    addLog(`Published twist message to ${topicPath}`, "success", {
       linear: { x, y, z: 0.0 },
       angular: { x: 0.0, y: 0.0, z },
     });
@@ -879,12 +888,13 @@ export default function Home() {
       return;
     }
 
-    addLog(`Publishing stop command to /${robotNamespace}/cmd_vel`, "websocket");
+    const topicPath = getTopicPath('cmd_vel');
+    addLog(`Publishing stop command to ${topicPath}`, "websocket");
 
     const ros = getRos();
     const cmdVel = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/cmd_vel`,
+      name: topicPath,
       messageType: "geometry_msgs/Twist",
     });
 
@@ -902,7 +912,7 @@ export default function Home() {
     });
 
     cmdVel.publish(twist);
-    addLog(`Published stop message to /${robotNamespace}/cmd_vel`, "success", {
+    addLog(`Published stop message to ${topicPath}`, "success", {
       linear: { x: 0.0, y: 0.0, z: 0.0 },
       angular: { x: -1.0, y: 0.0, z: 0.0 },
     });
@@ -929,12 +939,13 @@ export default function Home() {
     // handlePlayRobot(0, 0, 0);
 
     // Publish kick command to the kick topic
-    addLog(`Publishing kick command to /${robotNamespace}/kick topic`, "websocket");
+    const topicPath = getTopicPath('kick');
+    addLog(`Publishing kick command to ${topicPath} topic`, "websocket");
 
     const ros = getRos();
     const kickTopic = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/kick`,
+      name: topicPath,
       messageType: "std_msgs/msg/Bool",
     });
 
@@ -943,7 +954,7 @@ export default function Home() {
     });
 
     kickTopic.publish(kick);
-    addLog(`Published kick message to /${robotNamespace}/kick`, "success", { data: true });
+    addLog(`Published kick message to ${topicPath}`, "success", { data: true });
 
     // Wait for the kick action to complete before sending stop command
     // This prevents the stop command from interfering with the kick
@@ -1130,7 +1141,7 @@ export default function Home() {
                       title="Pause Timer"
                     >
                       <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 102 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </button>
                   )}

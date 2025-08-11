@@ -146,21 +146,30 @@ export default function HeadModule() {
       }
       return;
     }
+    
+    // Helper function to format topic paths correctly
+    const getTopicPath = (topic: string): string => {
+      if (!robotNamespace || robotNamespace === '') {
+        return `/${topic}`;
+      }
+      return `/${robotNamespace}/${topic}`;
+    };
+    
     const ros = getRos();
     console.log('[HeadModule] Creating topics with robotNamespace:', robotNamespace);
     rollTopicRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace || ""}/head_controller/roll`,
+      name: getTopicPath('head_controller/roll'),
       messageType: "std_msgs/msg/Int8",
     });
     pitchTopicRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace || ""}/head_controller/pitch`,
+      name: getTopicPath('head_controller/pitch'),
       messageType: "std_msgs/msg/Int8",
     });
     searchModeTopicRef.current = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace || ""}/head_controller/search_mode`,
+      name: getTopicPath('head_controller/search_mode'),
       messageType: "std_msgs/msg/String",
     });
     rollTopicRef.current.advertise();

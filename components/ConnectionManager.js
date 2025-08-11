@@ -104,7 +104,6 @@ export default function ConnectionManager({
               onChange={(e) => setRobotNamespace(e.target.value)}
               className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               placeholder="altair01"
-              required
             />
             <p className="text-xs text-gray-600 mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2">
               💡 Example: altair01
@@ -204,7 +203,7 @@ export default function ConnectionManager({
                       {connection.uri}
                     </div>
                     <div className="text-xs text-purple-700 font-mono bg-purple-50 px-2 py-1 rounded border border-purple-200 mb-1">
-                      {connection.namespace}
+                      {connection.namespace || '<empty>'}
                     </div>
                     <div className="text-xs text-green-700 font-mono bg-green-50 px-2 py-1 rounded border border-green-200">
                       {connection.walkPackage || 'quintic_walk'}

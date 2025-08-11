@@ -40,9 +40,18 @@ export default function RobotMapWithHeading() {
     if (!isConnected) return;
 
     const ros = getRos();
+    
+    // Helper function to format topic paths correctly
+    const getTopicPath = (topic: string): string => {
+      if (!robotNamespace || robotNamespace === '') {
+        return `/${topic}`;
+      }
+      return `/${robotNamespace}/${topic}`;
+    };
+    
     const odom = new ROSLIB.Topic({
       ros: ros,
-      name: `/${robotNamespace}/walk_engine_odometry`,
+      name: getTopicPath('walk_engine_odometry'),
       messageType: "nav_msgs/Odometry",
     });
 
