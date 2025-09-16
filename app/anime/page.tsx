@@ -6,7 +6,17 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // @ts-ignore
 import URDFLoader, { URDFRobot } from "@/lib/urdf-loaders/javascript/src/URDFLoader";
 
-const URDF_PATH = "/altair.urdf";
+const getBasePath = () => {
+  if (typeof window !== "undefined") {
+    // Next.js exposes __NEXT_DATA__.assetPrefix at runtime
+    // fallback to '' if not set
+    // @ts-ignore
+    return (window.__NEXT_DATA__?.assetPrefix || "");
+  }
+  return "";
+};
+
+const URDF_PATH = `${getBasePath()}/altair.urdf`;
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -77,6 +87,14 @@ export default function AnimatorPage() {
 
       // Load URDF
       const manager = new THREE.LoadingManager();
+      // Use setURLModifier to prepend basePath to all asset URLs
+      manager.setURLModifier((url) => {
+        const basePath = getBasePath();
+        if (url.startsWith("/")) {
+          return basePath + url;
+        }
+        return basePath + "/" + url;
+      });
       const loader = new URDFLoader(manager);
       loader.load(
         URDF_PATH,
