@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
   },
   assetPrefix: isProd ? '/altair_dashboard' : '',
   basePath: isProd ? '/altair_dashboard' : '',
+  env: {
+    NEXT_PUBLIC_BASE_PATH: '/altair_dashboard',
+  },
   output: "export",
 };
 
