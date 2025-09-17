@@ -88,13 +88,9 @@ export default function AnimatorPage() {
 
       // Load URDF
       const manager = new THREE.LoadingManager();
-      // Use setURLModifier to prepend basePath to all asset URLs
       manager.setURLModifier((url) => {
         const basePath = getBasePath();
-        if (url.startsWith("/")) {
-          return basePath + url;
-        }
-        return basePath + "/" + url;
+        return basePath + url;
       });
       const loader = new URDFLoader(manager);
       loader.load(
