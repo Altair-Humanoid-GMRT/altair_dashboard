@@ -17,7 +17,7 @@ const getBasePath = () => {
   return process.env.NEXT_PUBLIC_BASE_PATH || "";
 };
 
-const URDF_PATH = `${getBasePath()}/altair.urdf`;
+const URDF_PATH = `${getBasePath()}/altair_dashboard/altair.urdf`;
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
 
