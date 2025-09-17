@@ -117,7 +117,10 @@ export default function RobotMapWithHeading() {
               <div className="flex items-center gap-4">
                 {/* Back Button */}
                 <button
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => {
+                    const basePath = window.location.hostname === "localhost" ? "/" : "/altair_dashboard";
+                    window.location.href = basePath;
+                  }}
                   className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +158,7 @@ export default function RobotMapWithHeading() {
               className="relative w-full h-[600px] bg-gray-100 rounded-lg border border-gray-200 overflow-hidden"
             >
               <Image
-                src="/map.png"
+                src="map.png"
                 alt="Map"
                 fill
                 className="object-contain pointer-events-none"
