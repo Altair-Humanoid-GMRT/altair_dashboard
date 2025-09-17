@@ -16,8 +16,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true, // Disable default image optimization
   },
-  assetPrefix: isProd ? '/' : '',
-  basePath: isProd ? '/' : '',
+  // assetPrefix: isProd ? '/altair_dashboard' : '',
+  // basePath: isProd ? '/altair_dashboard' : '',
   output: "export",
 };
 
