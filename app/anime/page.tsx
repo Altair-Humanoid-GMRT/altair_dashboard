@@ -11,9 +11,10 @@ const getBasePath = () => {
     // Next.js exposes __NEXT_DATA__.assetPrefix at runtime
     // fallback to '' if not set
     // @ts-ignore
-    return (window.__NEXT_DATA__?.assetPrefix || "");
+    return window.__NEXT_DATA__?.assetPrefix || "";
   }
-  return "";
+  // On server, fallback to empty string (dev) or process.env.NEXT_PUBLIC_BASE_PATH (prod build)
+  return process.env.NEXT_PUBLIC_BASE_PATH || "";
 };
 
 const URDF_PATH = `${getBasePath()}/altair.urdf`;
